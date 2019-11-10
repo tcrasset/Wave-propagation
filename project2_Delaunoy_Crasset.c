@@ -86,10 +86,21 @@ Parameters* readParameterFile(const char* filename) {
     return params;
 }
 
-// void printCoordinate(Map* map, long long x, long long y){
+void printCoordinate(Map* map, long long x, long long y){
+    
+    long long index = map->X * x +  y;
+    printf("map(%lld,%lld) = %lf \t map[%lld] \n", x, y, map->grid[index], index);
 
+}
 
-// }
+void printGrid(Map* map){
+    for(int i = 0; i < map->X * map->Y; i++){
+        printf("%lf ", map->grid[i]);
+        if(i != 0 && i % map-> X == 0){
+            printf("\n");
+        }
+    }
+}
 
 Map* readMapFile(const char* filename) {
     FILE* fp;
@@ -160,10 +171,13 @@ int main(int argc, char const* argv[]) {
     //Check argument validity
     assert((scheme == 0) || (scheme == 1));
 
-    Parameters* param = readParameterFile(parameter_file);
-    Map* map = readMapFile("map_test.dat");
+    writeTestMap("test_map.dat");
 
-    writeTestMap("map_test.dat");
+    Parameters* param = readParameterFile(parameter_file);
+    Map* map = readMapFile("test_map.dat");
+
+    printCoordinate(map,0, 0);
+    printGrid(map);
 
     free(param);
     free(map->grid);
