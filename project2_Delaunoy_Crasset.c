@@ -6,6 +6,8 @@
 
 #include "project2_Delaunoy_Crasset.h"
 
+#define M_PI 3.14159265358979323846
+
 void writeTestMap(char* filename){
 
     FILE* fp;
@@ -56,8 +58,9 @@ Parameters* readParameterFile(const char* filename) {
     fscanf(fp, "%lf", &params->deltaX);
     fscanf(fp, "%lf", &params->deltaY);
     fscanf(fp, "%lf", &params->deltaT);
+    fscanf(fp, "%u", &params->TMax);
     fscanf(fp, "%lf", &params->A);
-    fscanf(fp, "%lf", &params->func);
+    fscanf(fp, "%lf", &params->f);
     fscanf(fp, "%u", &params->S);
     fscanf(fp, "%u", &params->s);
     fscanf(fp, "%lf", &params->r_threshold);
@@ -204,6 +207,241 @@ Map* readMapFile(const char* filename) {
     return map;
 }
 
+double** allocateDoubleMatrix(int x, int y){
+    double** matrix = malloc(x * sizeof(double*));
+    if(!matrix)
+        return NULL;
+
+    for(int i = 0; i < x; i++){
+        matrix[i] = malloc(y * sizeof(double));
+        if(!matrix[i]){
+            for(int j = i-1; j >= 0; j--)
+                free(matrix[j]);
+            free(matrix);
+            return NULL;
+        }
+    }
+
+    return matrix;
+}
+
+void freeDoubleMatrix(double** matrix, int x){
+    for(int i = 0; i < x; i++)
+        free(matrix[i]);
+
+    free(matrix);
+}
+
+void printDoubleMatrix(double** matrix, int x, int y){
+    for(int i = 0; i < x; i++){
+        for(int j = 0; j < y; j++){
+            fprintf(stderr, "%lf ", matrix[i][j]);
+        }
+        fprintf(stderr, "\n");
+    }
+}
+
+int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, double*** v){
+    int xSize = (int)(map->a / params->deltaX);
+    int ySize = (int)(map->b / params->deltaY);
+
+
+    // Allocate memory
+    // nu in {0, 1, ..., a/dx}X{0, 1, ..., b/dy}
+    double** nuCurr = allocateDoubleMatrix(xSize + 1, ySize + 1);
+    if(!nuCurr){
+        return -1;
+    }
+
+    double** nuNext = allocateDoubleMatrix(xSize + 1, ySize + 1);
+    if(!nuNext){
+        freeDoubleMatrix(nuCurr, xSize + 1);
+        return -1;
+    }
+
+    // u in {-1/2, 1/2, ..., a/dx + 1/2}X{0, 1, ..., b/dy}
+    double** uCurr = allocateDoubleMatrix(xSize + 2, ySize + 1);
+    if(!uCurr){
+        freeDoubleMatrix(nuCurr, xSize + 1);
+        freeDoubleMatrix(nuNext, xSize + 1);
+        return -1;
+    }
+
+    double** uNext = allocateDoubleMatrix(xSize + 2, ySize + 1);
+    if(!uNext){
+        freeDoubleMatrix(nuCurr, xSize + 1);
+        freeDoubleMatrix(nuNext, xSize + 1);
+        freeDoubleMatrix(uCurr, xSize + 2);
+        return -1;
+    }
+
+    // v in {0, 1, .., a/dx}X{-1/2, 1/2, ..., b/dy + 1/2}
+    double** vCurr = allocateDoubleMatrix(xSize + 1, ySize + 2);
+    if(!vCurr){
+        freeDoubleMatrix(nuCurr, xSize + 1);
+        freeDoubleMatrix(nuNext, xSize + 1);
+        freeDoubleMatrix(uCurr, xSize + 2);
+        freeDoubleMatrix(uNext, xSize + 2);
+        return -1;
+    }
+
+    double** vNext = allocateDoubleMatrix(xSize + 1, ySize + 2);
+    if(!vNext){
+        freeDoubleMatrix(nuCurr, xSize + 1);
+        freeDoubleMatrix(nuNext, xSize + 1);
+        freeDoubleMatrix(uCurr, xSize + 2);
+        freeDoubleMatrix(uNext, xSize + 2);
+        freeDoubleMatrix(vCurr, xSize + 1);
+        return -1;
+    }
+
+    // h in {-1/2, 0, 1/2, ..., a/dx, a/dx + 1/2}X{-1/2, 0, 1/2, ..., b/dy, b/dy + 1/2}
+    double** h = allocateDoubleMatrix(2 * xSize + 3, 2 * ySize + 3);
+    if(!h){
+        freeDoubleMatrix(nuCurr, xSize + 1);
+        freeDoubleMatrix(nuNext, xSize + 1);
+        freeDoubleMatrix(uCurr, xSize + 2);
+        freeDoubleMatrix(uNext, xSize + 2);
+        freeDoubleMatrix(vCurr, xSize + 1);
+        freeDoubleMatrix(vNext, xSize + 1);
+        return -1;
+    }
+
+    // Initialise matrices
+
+    for(int i = 1; i < 2 * xSize + 2; i++){
+        for(int j = 1; j < 2 * ySize + 2; j++)
+            h[i][j] = getGridValueAtDomainCoordinates(map, (i-1) * params->deltaX / 2, (j-1) * params->deltaY / 2);
+    }
+
+    for(int i = 0; i < 2 * xSize + 3; i++)
+        h[i][0] = 0;
+
+    for(int i = 0; i < 2 * xSize + 3; i++)
+        h[i][2*ySize+2] = 0;
+
+    for(int i = 0; i < 2 * ySize + 3; i++)
+        h[0][i] = 0;
+
+    for(int i = 0; i < 2 * ySize + 3; i++)
+        h[2*xSize+2][i] = 0;
+
+    for(int i = 0; i < xSize + 1; i++){
+        for(int j = 0; j < ySize + 1; j++)
+            nuCurr[i][j] = 0;
+    }
+
+    for(int i = 0; i < xSize + 2; i++){
+        for(int j = 0; j < ySize + 1; j++)
+            uCurr[i][j] = 0;
+    }
+
+    for(int i = 0; i < xSize + 1; i++){
+        for(int j = 0; j < ySize + 1; j++)
+            vCurr[i][j] = 0;
+    }
+
+    for(unsigned int t = 1; t <= params->TMax; t++){
+        printf("t = %u\n", t);
+
+        // Compute nuNext
+        // Separate for loop for cache optimization
+        /*
+        for(int i = 0; i < xSize + 1; i++)
+            nuNext[i][0] = 0;
+
+        for(int i = 0; i < xSize + 1; i++)
+            nuNext[i][ySize] = 0;
+
+        for(int i = 0; i < ySize + 1; i++)
+            nuNext[0][i] = 0;
+
+        for(int i = 0; i < ySize + 1; i++)
+            nuNext[xSize][i] = 0;
+        */
+
+        for(int i = 0; i < xSize + 1; i++){
+            for(int j = 0; j < ySize + 1; j++){
+                nuNext[i][j] = (-(h[2*i+2][2*j+1] * uCurr[i+1][j] - h[2*i][2*j+1] * uCurr[i][j]) / params->deltaX 
+                                -(h[2*i+1][2*j+2] * vCurr[i][j+1] - h[2*i+1][2*j] * vCurr[i][j]) / params->deltaY)
+                                * params->deltaT + nuCurr[i][j];
+            }
+        }
+
+        // Compute uNext
+        for(int i = 0; i < ySize + 1; i++)
+            uNext[0][i] = 0;
+
+        for(int i = 0; i < ySize + 1; i++)
+            uNext[xSize+1][i] = 0;
+
+        for(int i = 1; i < xSize + 1; i++){
+            for(int j = 0; j < ySize + 1; j++){
+                uNext[i][j] = (-params->g * (nuCurr[i][j] - nuCurr[i-1][j]) / params->deltaX
+                               -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
+            }
+        }
+
+        // Compute vNext
+        for(int i = 0; i < xSize + 1; i++)
+            vNext[i][0] = 0;
+
+        for(int i = 0; i < xSize + 1; i++){
+            if(params->s == 0)
+                vNext[i][ySize+1] = params->A * sin(2 * M_PI * params->f * t * params->deltaT);
+            else
+                vNext[i][ySize+1] = params->A * sin(2 * M_PI * params->f * t * params->deltaT) * exp(- t * params->deltaT / 500);
+        }
+
+        for(int i = 0; i < xSize + 1; i++){
+            for(int j = 1; j < ySize + 1; j++){
+                vNext[i][j] = (-params->g * (nuCurr[i][j] - nuCurr[i][j-1]) / params->deltaY
+                               -params->gamma * vCurr[i][j]) * params->deltaT + vCurr[i][j];
+            }
+        }
+
+        printf("nuCurr\n");
+        printDoubleMatrix(nuCurr, xSize + 1, ySize + 1);
+        printf("nuNext\n");
+        printDoubleMatrix(nuNext, xSize + 1, ySize + 1);
+        printf("uCurr\n");
+        printDoubleMatrix(uCurr, xSize + 2, ySize + 1);
+        printf("uNext\n");
+        printDoubleMatrix(uNext, xSize + 2, ySize + 1);
+        printf("vCurr\n");
+        printDoubleMatrix(vCurr, xSize + 1, ySize + 2);
+        printf("vNext\n");
+        printDoubleMatrix(vNext, xSize + 1, ySize + 2);
+
+        // Go to next step
+        double** tmp;
+        
+        tmp = nuCurr;
+        nuCurr = nuNext;
+        nuNext = tmp;
+
+        tmp = uCurr;
+        uCurr = uNext;
+        uNext = tmp;
+
+        tmp = vCurr;
+        vCurr = vNext;
+        vNext = tmp;
+
+    }
+
+    *nu = nuCurr;
+    *u = uCurr;
+    *v = vCurr;
+    
+    freeDoubleMatrix(nuNext, xSize + 1);
+    freeDoubleMatrix(uNext, xSize + 2);
+    freeDoubleMatrix(vNext, xSize + 1);
+    freeDoubleMatrix(h, 2 * xSize + 1);
+
+    return 0;
+}
+
 int main(int argc, char const* argv[]) {
     // Check number of arguments
     assert(argc == 4);
@@ -220,18 +458,37 @@ int main(int argc, char const* argv[]) {
     Map* map = readMapFile("test_map.dat");
 
     printf("Bilinear interp : %lf\n", bilinearInterpolation(map, 1.9, 0.2));
-    printGrid(map);
 
-    free(param);
-    free(map->grid);
-    free(map);
+    printUsefulMapInformation(map);
+    printGrid(map);
+    printf("\n");
 
     // Explicit
     if (scheme == 0) {
         printf("Explicit ");
-        printf("%s %s %u", parameter_file, map_file, scheme);
+        printf("%s %s %u \n", parameter_file, map_file, scheme);
+        
+        double** nu;
+        double** u;
+        double** v;
 
-        return 0;
+        if(eulerExplicit(map, param, &nu, &u, &v) == -1){
+            fprintf(stderr, "error in euler function\n");
+            free(param);
+            free(map->grid);
+            free(map);
+        }
+
+        int xSize = (int)(map->a / param->deltaX);
+        int ySize = (int)(map->b / param->deltaY);
+
+        printf("nu\n");
+        printDoubleMatrix(nu, xSize + 1, ySize + 1);
+        printf("u\n");
+        printDoubleMatrix(u, xSize + 2, xSize + 1);
+        printf("v\n");
+        printDoubleMatrix(v, xSize + 1, ySize + 2);
+
     }
     // Implicit
     else {
@@ -239,6 +496,10 @@ int main(int argc, char const* argv[]) {
         printf("%s %s %u", parameter_file, map_file, scheme);
         return 0;
     }
+
+    free(param);
+    free(map->grid);
+    free(map);
     /* code */
     return 0;
 }

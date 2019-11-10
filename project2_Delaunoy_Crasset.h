@@ -7,8 +7,9 @@ typedef struct Parameters {
     double deltaX;
     double deltaY;
     double deltaT;
+    unsigned int TMax;
     double A;
-    double func;
+    double f;
     unsigned int S;
     unsigned int s;
     double r_threshold;
