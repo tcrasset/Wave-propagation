@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <sys/types.h>
 
 typedef struct Parameters {
@@ -86,11 +87,44 @@ Parameters* readParameterFile(const char* filename) {
     return params;
 }
 
+
+long long getIndex(Map* map, long long x, long long y){
+    return map->X * x +  y;
+}
+
 void printCoordinate(Map* map, long long x, long long y){
     
-    long long index = map->X * x +  y;
+    long long index = getIndex(map, x, y);
     printf("map(%lld,%lld) = %lf \t map[%lld] \n", x, y, map->grid[index], index);
 
+}
+
+double getGridValueAtSampling(Map* map, long long x, long long y){
+    return map->grid[map->X * x +  y];
+}
+
+double bilinearInterpolation(Map* map, double x, double y){
+
+    double dx = map->a/map->X;
+    double dy = map->b/map->Y;
+
+    long long k = trunc(x/dx);
+    long long l = trunc(y/dy);
+
+    double x_k = k * dx;
+    double x_k1 = (k+1) * dx;
+    double y_l = l * dy;
+    double y_l1 = (l+1) * dy;
+
+    double prod1 = (x_k1 - x) * (y_l1 - y);
+    double prod2 = (x_k1 - x) * (y - y_l);
+    double prod3 = (x - x_k) * (y_l1 - y);
+    double prod4 = (x - x_k) * (y - y_l);
+
+    return (prod1 * getGridValueAtSampling(map, k, l)
+            + prod2 * getGridValueAtSampling(map, k, l+1)
+            + prod3 * getGridValueAtSampling(map, k+1, l)
+            + prod4 * getGridValueAtSampling(map, k+1, l+1))/(dx*dy);
 }
 
 void printGrid(Map* map){
@@ -176,7 +210,8 @@ int main(int argc, char const* argv[]) {
     Parameters* param = readParameterFile(parameter_file);
     Map* map = readMapFile("test_map.dat");
 
-    printCoordinate(map,0, 0);
+    printCoordinate(map ,0, 0);
+    printf("Bilinear interp : %lf\n", bilinearInterpolation(map, 2,0.2));
     printGrid(map);
 
     free(param);
