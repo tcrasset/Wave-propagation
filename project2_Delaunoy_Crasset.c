@@ -91,6 +91,10 @@ double bilinearInterpolation(Map* map, double x, double y){
     double dy = map->b/map->Y;
 
     // Sampling coordinates
+    // NB: trunc comes from the math library, which is not included in base gcc, you have to 
+    // compile your code using the flag -lm to add it at compile time like this:
+    // gcc -g yourfile.c -lm -o yourOutFile
+    // i.e. the flag should come after the c code
     long long k = trunc(x/dx);
     long long l = trunc(y/dy);
 
