@@ -89,26 +89,22 @@ double bilinearInterpolation(Map* map, double x, double y){
     assert(x <= map->a);
     assert(y <= map->b);
 
-    // Sampling step
-    double dx = map->a/map->X;
-    double dy = map->b/map->Y;
-
     // Sampling coordinates
     // NB: trunc comes from the math library, which is not included in base gcc, you have to 
     // compile your code using the flag -lm to add it at compile time like this:
     // gcc -g yourfile.c -lm -o yourOutFile
     // i.e. the flag should come after the c code
-    long long k = trunc(x/dx);
-    long long l = trunc(y/dy);
+    long long k = trunc(x/map->dx);
+    long long l = trunc(y/map->dy);
 
     // printUsefulMapInformation(map);
     // printf("x : %lf, y : %lf \n", x, y);
     // printf("k: %lld, l: %lld \n", k, l);
 
-    double x_k = k * dx;
-    double x_k1 = (k+1) * dx;
-    double y_l = l * dy;
-    double y_l1 = (l+1) * dy;
+    double x_k = k * map->dx;
+    double x_k1 = (k+1) * map->dx;
+    double y_l = l * map->dy;
+    double y_l1 = (l+1) * map->dy;
 
     double prod1 = (x_k1 - x) * (y_l1 - y);
     double prod2 = (x_k1 - x) * (y - y_l);
@@ -118,7 +114,7 @@ double bilinearInterpolation(Map* map, double x, double y){
     return (prod1 * getGridValueAtSamplingCoordinates(map, k, l)
             + prod2 * getGridValueAtSamplingCoordinates(map, k, l+1)
             + prod3 * getGridValueAtSamplingCoordinates(map, k+1, l)
-            + prod4 * getGridValueAtSamplingCoordinates(map, k+1, l+1))/(dx*dy);
+            + prod4 * getGridValueAtSamplingCoordinates(map, k+1, l+1))/(map->dx*map->dy);
 }
 
 double getGridValueAtDomainCoordinates(Map* map, double x, double y){
