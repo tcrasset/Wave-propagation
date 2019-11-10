@@ -22,6 +22,8 @@ typedef struct Map {
     double b;
     long long X;
     long long Y;
+    double dx;
+    double dy;
     double* grid;
 } Map;
 
@@ -87,29 +89,36 @@ Parameters* readParameterFile(const char* filename) {
     return params;
 }
 
-
-long long getIndex(Map* map, long long x, long long y){
-    return map->X * x +  y;
+void printUsefulMapInformation(Map* map){
+    double dx = map->a/map->X;
+    double dy = map->b/map->Y;
+    printf("X: %lld Y: %lld\n", map->X, map->Y);
+    printf("a : %lf, b : %lf \n", map->a, map->b);
+    printf("Sampling steps: dx = %lf, dy = %lf\n", dx, dy);
 }
 
-void printCoordinate(Map* map, long long x, long long y){
-    
-    long long index = getIndex(map, x, y);
-    printf("map(%lld,%lld) = %lf \t map[%lld] \n", x, y, map->grid[index], index);
-
-}
-
-double getGridValueAtSampling(Map* map, long long x, long long y){
-    return map->grid[map->X * x +  y];
+double getGridValueAtSamplingCoordinates(Map* map, long long x, long long y){
+    return map->grid[map->Y * y + x];
 }
 
 double bilinearInterpolation(Map* map, double x, double y){
 
+    assert(0 <= x);
+    assert(0 <= y);
+    assert(x <= map->a);
+    assert(y <= map->b);
+
+    // Sampling step
     double dx = map->a/map->X;
     double dy = map->b/map->Y;
 
+    // Sampling coordinates
     long long k = trunc(x/dx);
     long long l = trunc(y/dy);
+
+    // printUsefulMapInformation(map);
+    // printf("x : %lf, y : %lf \n", x, y);
+    // printf("k: %lld, l: %lld \n", k, l);
 
     double x_k = k * dx;
     double x_k1 = (k+1) * dx;
@@ -121,10 +130,25 @@ double bilinearInterpolation(Map* map, double x, double y){
     double prod3 = (x - x_k) * (y_l1 - y);
     double prod4 = (x - x_k) * (y - y_l);
 
-    return (prod1 * getGridValueAtSampling(map, k, l)
-            + prod2 * getGridValueAtSampling(map, k, l+1)
-            + prod3 * getGridValueAtSampling(map, k+1, l)
-            + prod4 * getGridValueAtSampling(map, k+1, l+1))/(dx*dy);
+    return (prod1 * getGridValueAtSamplingCoordinates(map, k, l)
+            + prod2 * getGridValueAtSamplingCoordinates(map, k, l+1)
+            + prod3 * getGridValueAtSamplingCoordinates(map, k+1, l)
+            + prod4 * getGridValueAtSamplingCoordinates(map, k+1, l+1))/(dx*dy);
+}
+
+double getGridValueAtDomainCoordinates(Map* map, double x, double y){
+
+    double epsilon = 10e-6;
+    // Sampling step
+    double dx = map->a/map->X;
+    double dy = map->b/map->Y;
+
+    // If value already in the grid, use that instead of interpolating
+    if(fmod(x, dx) < epsilon && fmod(y, dy)  < epsilon){
+        return getGridValueAtSamplingCoordinates(map, trunc(x/dx), trunc(y/dy)); 
+    } else {
+        return bilinearInterpolation(map, x, y);
+    }
 }
 
 void printGrid(Map* map){
@@ -138,6 +162,7 @@ void printGrid(Map* map){
 
 Map* readMapFile(const char* filename) {
     FILE* fp;
+    char buffer[8];
 
     fp = fopen(filename, "rb");
     if (fp == NULL) {
@@ -157,7 +182,8 @@ Map* readMapFile(const char* filename) {
         exit(EXIT_FAILURE);
     }
 
-    char buffer[8];
+
+    // Read constants from the map file
     fread(buffer, 8, 1, fp);
     map->a = *((double*)buffer);
 
@@ -170,9 +196,9 @@ Map* readMapFile(const char* filename) {
     fread(buffer, 8, 1, fp);
     map->Y = *((long long*)buffer);
 
-    // //Override the parameters (temporary)
-    // map->X = 8000;
-    // map->Y = 8000;
+    // Sampling step
+    map->dx = map->a/map->X;
+    map->dy = map->b/map->Y;
 
     map->grid = malloc((map->X * map->Y) * sizeof(double));
 
@@ -183,10 +209,11 @@ Map* readMapFile(const char* filename) {
         exit(EXIT_FAILURE);
     }
 
-    // While we still read 8 contiguous bytes,
-    // fill the array
+    // Read the barymetric depth grid from the map file
+
     long long i = 0;
     while (fread(buffer, 8, 1, fp) == 1) {
+    // While we still read 8 contiguous bytes, fill the array
         map->grid[i] = *((double*)buffer);
         i++;
     }
@@ -210,8 +237,7 @@ int main(int argc, char const* argv[]) {
     Parameters* param = readParameterFile(parameter_file);
     Map* map = readMapFile("test_map.dat");
 
-    printCoordinate(map ,0, 0);
-    printf("Bilinear interp : %lf\n", bilinearInterpolation(map, 2,0.2));
+    printf("Bilinear interp : %lf\n", bilinearInterpolation(map, 1.9, 0.2));
     printGrid(map);
 
     free(param);
