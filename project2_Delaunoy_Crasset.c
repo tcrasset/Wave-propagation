@@ -24,6 +24,35 @@ typedef struct Map {
     double* grid;
 } Map;
 
+
+void writeTestMap(char* filename){
+
+    FILE* fp;
+
+    fp = fopen(filename, "w");
+    if (fp == NULL) {
+        fprintf(stderr, "Unable to open file %s\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    double a = 5;
+    double b = 10;
+    long long X = 10;
+    long long Y = 20;
+
+    fwrite(&a, sizeof(a),1,fp);
+    fwrite(&b, sizeof(b),1,fp);
+    fwrite(&X, sizeof(X),1,fp);
+    fwrite(&Y, sizeof(Y),1,fp);
+
+    for(int i =0; i < X * Y; i++){
+        double value = (double) i;
+        fwrite(&value, sizeof(value),1,fp); 
+    }
+
+    fclose(fp);
+}
+
 Parameters* readParameterFile(const char* filename) {
     FILE* fp;
 
@@ -57,6 +86,10 @@ Parameters* readParameterFile(const char* filename) {
     return params;
 }
 
+// void printCoordinate(Map* map, long long x, long long y){
+
+
+// }
 
 Map* readMapFile(const char* filename) {
     FILE* fp;
@@ -92,11 +125,11 @@ Map* readMapFile(const char* filename) {
     fread(buffer, 8, 1, fp);
     map->Y = *((long long*)buffer);
 
-    //Override the parameters (temporary)
-    map->X = 8000;
-    map->Y = 8000;
+    // //Override the parameters (temporary)
+    // map->X = 8000;
+    // map->Y = 8000;
 
-    map->grid = malloc((map->X * map->Y)* sizeof(double));
+    map->grid = malloc((map->X * map->Y) * sizeof(double));
 
     if (map->grid == NULL) {
         fprintf(stderr, "Unable to allocate memory for the grid\n");
@@ -110,10 +143,10 @@ Map* readMapFile(const char* filename) {
     long long i = 0;
     while (fread(buffer, 8, 1, fp) == 1) {
         map->grid[i] = *((double*)buffer);
+        i++;
     }
 
     fclose(fp);
-
     return map;
 }
 
@@ -128,7 +161,9 @@ int main(int argc, char const* argv[]) {
     assert((scheme == 0) || (scheme == 1));
 
     Parameters* param = readParameterFile(parameter_file);
-    Map* map = readMapFile(map_file);
+    Map* map = readMapFile("map_test.dat");
+
+    writeTestMap("map_test.dat");
 
     free(param);
     free(map->grid);
