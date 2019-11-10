@@ -57,6 +57,7 @@ Parameters* readParameterFile(const char* filename) {
     return params;
 }
 
+
 Map* readMapFile(const char* filename) {
     FILE* fp;
 
@@ -91,21 +92,25 @@ Map* readMapFile(const char* filename) {
     fread(buffer, 8, 1, fp);
     map->Y = *((long long*)buffer);
 
-    // map->grid = malloc(map->X * map->Y * sizeof(double));
+    //Override the parameters (temporary)
+    map->X = 8000;
+    map->Y = 8000;
 
-    // if (map->grid == NULL) {
-    //     fprintf(stderr, "Unable to allocate memory for the grid\n");
-    //     free(map);
-    //     fclose(fp);
-    //     exit(EXIT_FAILURE);
-    // }
+    map->grid = malloc((map->X * map->Y)* sizeof(double));
 
-    // // While we still read 8 contiguous bytes,
-    // // fill the array
-    // long long i = 0;
-    // while (fread(buffer, 8, 1, fp) == 8) {
-    //     map->grid[i] = *((double*)buffer);
-    // }
+    if (map->grid == NULL) {
+        fprintf(stderr, "Unable to allocate memory for the grid\n");
+        free(map);
+        fclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    // While we still read 8 contiguous bytes,
+    // fill the array
+    long long i = 0;
+    while (fread(buffer, 8, 1, fp) == 1) {
+        map->grid[i] = *((double*)buffer);
+    }
 
     fclose(fp);
 
@@ -126,17 +131,19 @@ int main(int argc, char const* argv[]) {
     Map* map = readMapFile(map_file);
 
     free(param);
+    free(map->grid);
     free(map);
+
     // Explicit
     if (scheme == 0) {
-        printf("Explicit");
+        printf("Explicit ");
         printf("%s %s %u", parameter_file, map_file, scheme);
 
         return 0;
     }
     // Implicit
     else {
-        printf("Implicit");
+        printf("Implicit ");
         printf("%s %s %u", parameter_file, map_file, scheme);
         return 0;
     }
