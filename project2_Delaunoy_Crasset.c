@@ -4,29 +4,7 @@
 #include <math.h>
 #include <sys/types.h>
 
-typedef struct Parameters {
-    double g;
-    double gamma;
-    double deltaX;
-    double deltaY;
-    double deltaT;
-    double A;
-    double func;
-    unsigned int S;
-    unsigned int s;
-    double r_threshold;
-} Parameters;
-
-typedef struct Map {
-    double a;
-    double b;
-    long long X;
-    long long Y;
-    double dx;
-    double dy;
-    double* grid;
-} Map;
-
+#include "project2_Delaunoy_Crasset.h"
 
 void writeTestMap(char* filename){
 
