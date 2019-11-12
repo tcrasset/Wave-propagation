@@ -136,8 +136,8 @@ double bilinearInterpolation(Map* map, double x, double y){
 }
 
 double getGridValueAtDomainCoordinates(Map* map, double x, double y){
-    assert(x > 0);
-    assert(y > 0);
+    assert(x >= 0);
+    assert(y >= 0);
     fprintf(stdout, "x = %lf, y = %lf\n", x, y);
     double epsilon = 10e-6;
     // Sampling step
@@ -228,8 +228,8 @@ Map* readMapFile(const char* filename) {
     map->Y = *((int*)buffer);
 
     // Sampling step
-    map->dx = map->a/map->X;
-    map->dy = map->b/map->Y;
+    map->dx = map->a/(map->X -1);
+    map->dy = map->b/(map->Y -1);
 
     map->grid = allocateDoubleMatrix(map->X, map->Y);
 
@@ -496,6 +496,8 @@ int main(int argc, char const* argv[]) {
             free(param);
             free(map->grid);
             free(map);
+
+            //exit(EXIT_FAILURE)
         }
 
         int xSize = (int)(map->a / param->deltaX);
