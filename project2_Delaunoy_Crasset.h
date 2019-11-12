@@ -25,15 +25,20 @@ typedef struct Map {
     double* grid;
 } Map;
 
+typedef struct SparseMatrix {
+    unsigned int nonzeroSize;
+    unsigned int* m;
+    unsigned int* n;
+    unsigned int* v;
+} SparseMatrix;
+
 void writeTestMap(char* filename);
 Parameters* readParameterFile(const char* filename);
 void printUsefulMapInformation(Map* map);
-double getGridValueAtSamplingCoordinates(Map* map, long long x, long long y);
+double getGridValueAtSamplingCoordinates(Map* map, int x, int y);
 double bilinearInterpolation(Map* map, double x, double y);
 double getGridValueAtDomainCoordinates(Map* map, double x, double y);
 void printGrid(Map* map);
 Map* readMapFile(const char* filename);
 
-
-
-#endif // MAIN_H_
+#endif  // MAIN_H_
