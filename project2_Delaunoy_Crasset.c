@@ -433,7 +433,7 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
     freeDoubleMatrix(nuNext, xSize + 1);
     freeDoubleMatrix(uNext, xSize + 2);
     freeDoubleMatrix(vNext, xSize + 1);
-    freeDoubleMatrix(h, 2 * xSize + 1);
+    freeDoubleMatrix(h, 2 * xSize + 3);
 
     return 0;
 }
@@ -484,6 +484,10 @@ int main(int argc, char const* argv[]) {
         printDoubleMatrix(u, xSize + 2, xSize + 1);
         printf("v\n");
         printDoubleMatrix(v, xSize + 1, ySize + 2);
+
+        freeDoubleMatrix(nu, xSize + 1);
+        freeDoubleMatrix(u, xSize + 2);
+        freeDoubleMatrix(v, xSize + 1);
 
     }
     // Implicit
