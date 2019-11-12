@@ -18,11 +18,11 @@ typedef struct Parameters {
 typedef struct Map {
     double a;
     double b;
-    long long X;
-    long long Y;
+    int X;
+    int Y;
     double dx;
     double dy;
-    double* grid;
+    double** grid;
 } Map;
 
 typedef struct SparseMatrix {
@@ -35,7 +35,6 @@ typedef struct SparseMatrix {
 void writeTestMap(char* filename);
 Parameters* readParameterFile(const char* filename);
 void printUsefulMapInformation(Map* map);
-double getGridValueAtSamplingCoordinates(Map* map, int x, int y);
 double bilinearInterpolation(Map* map, double x, double y);
 double getGridValueAtDomainCoordinates(Map* map, double x, double y);
 void printGrid(Map* map);
