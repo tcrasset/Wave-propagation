@@ -93,11 +93,10 @@ Parameters* readParameterFile(const char* filename) {
 }
 
 void printUsefulMapInformation(Map* map){
-    double dx = map->a/map->X;
-    double dy = map->b/map->Y;
+
     printf("X: %d Y: %d\n", map->X, map->Y);
     printf("a : %lf, b : %lf \n", map->a, map->b);
-    printf("Sampling steps: dx = %lf, dy = %lf\n", dx, dy);
+    printf("Sampling steps: dx = %lf, dy = %lf\n", map->dx, map->dy);
 }
 
 double bilinearInterpolation(Map* map, double x, double y){
@@ -141,12 +140,10 @@ double getGridValueAtDomainCoordinates(Map* map, double x, double y){
     fprintf(stdout, "x = %lf, y = %lf\n", x, y);
     double epsilon = 10e-6;
     // Sampling step
-    double dx = map->a/map->X;
-    double dy = map->b/map->Y;
 
     // If value already in the grid, use that instead of interpolating
-    if(fmod(x, dx) < epsilon && fmod(y, dy)  < epsilon){
-        return map->grid[(int) trunc(x/dx)][(int) trunc(y/dy)]; 
+    if(fmod(x, map->dx) < epsilon && fmod(y, map->dy)  < epsilon){
+        return map->grid[(int) trunc(x/map->dx)][(int) trunc(y/map->dy)]; 
     } else {
         return bilinearInterpolation(map, x, y);
     }
@@ -275,7 +272,7 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
 
     int xSize = (int)(map->a / params->deltaX);
     int ySize = (int)(map->b / params->deltaY);
-    fprintf(stderr, "xSize = %d ySize = %d \n", xSize, ySize);
+    fprintf(stdout, "xSize = %d ySize = %d \n", xSize, ySize);
 
     // Allocate memory
     // nu in {0, 1, ..., a/dx}X{0, 1, ..., b/dy}
