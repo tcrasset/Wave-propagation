@@ -132,7 +132,7 @@ double bilinearInterpolation(Map* map, double x, double y){
 }
 
 double getGridValueAtDomainCoordinates(Map* map, double x, double y){
-
+    fprintf(stderr, "x = %lf, y = %lf\n", x, y);
     double epsilon = 10e-6;
     // Sampling step
     double dx = map->a/map->X;
@@ -243,8 +243,8 @@ void freeDoubleMatrix(double** matrix, int x){
 }
 
 void printDoubleMatrix(double** matrix, int x, int y){
-    for(int i = 0; i < x; i++){
-        for(int j = 0; j < y; j++){
+    for(int j = 0; j < y; j++){
+        for(int i = 0; i < x; i++){
             fprintf(stderr, "%lf ", matrix[i][j]);
         }
         fprintf(stderr, "\n");
@@ -254,7 +254,7 @@ void printDoubleMatrix(double** matrix, int x, int y){
 int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, double*** v){
     int xSize = (int)(map->a / params->deltaX);
     int ySize = (int)(map->b / params->deltaY);
-
+    fprintf(stderr, "xSize = %d ySize = %d \n", xSize, ySize);
 
     // Allocate memory
     // nu in {0, 1, ..., a/dx}X{0, 1, ..., b/dy}
@@ -319,22 +319,14 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
 
     // Initialise matrices
 
-    for(int i = 1; i < 2 * xSize + 2; i++){
-        for(int j = 1; j < 2 * ySize + 2; j++)
-            h[i][j] = getGridValueAtDomainCoordinates(map, (i-1) * params->deltaX / 2, (j-1) * params->deltaY / 2);
+    for(int i = 0; i < 2 * xSize + 3; i++){
+        for(int j = 0; j < 2 * ySize + 3; j++)
+            h[i][j] = getGridValueAtDomainCoordinates(map, ((float)(i * xSize)/(xSize + 1)) * (params->deltaX / 2), ((float)(j * ySize)/(ySize + 1)) * (params->deltaY / 2));
     }
 
-    for(int i = 0; i < 2 * xSize + 3; i++)
-        h[i][0] = 0;
-
-    for(int i = 0; i < 2 * xSize + 3; i++)
-        h[i][2*ySize+2] = 0;
-
-    for(int i = 0; i < 2 * ySize + 3; i++)
-        h[0][i] = 0;
-
-    for(int i = 0; i < 2 * ySize + 3; i++)
-        h[2*xSize+2][i] = 0;
+    printf("h\n");
+    printDoubleMatrix(h, 2*xSize+3, 2*ySize+3);
+    printf("apres h\n");
 
     for(int i = 0; i < xSize + 1; i++){
         for(int j = 0; j < ySize + 1; j++)
@@ -474,7 +466,6 @@ int main(int argc, char const* argv[]) {
         printf("Explicit ");
         printf("%s %s %u \n", parameter_file, map_file, scheme);
         
-<<<<<<< HEAD
         double** nu;
         double** u;
         double** v;
@@ -500,28 +491,6 @@ int main(int argc, char const* argv[]) {
         freeDoubleMatrix(u, xSize + 2);
         freeDoubleMatrix(v, xSize + 1);
 
-=======
-        // double** nu;
-        // double** u;
-        // double** v;
-
-        // if(eulerExplicit(map, param, &nu, &u, &v) == -1){
-        //     fprintf(stderr, "error in euler function\n");
-        //     free(param);
-        //     free(map->grid);
-        //     free(map);
-        // }
-
-        // int xSize = (int)(map->a / param->deltaX);
-        // int ySize = (int)(map->b / param->deltaY);
-
-        // printf("nu\n");
-        // printDoubleMatrix(nu, xSize + 1, ySize + 1);
-        // printf("u\n");
-        // printDoubleMatrix(u, xSize + 2, xSize + 1);
-        // printf("v\n");
-        // printDoubleMatrix(v, xSize + 1, ySize + 2);
->>>>>>> 73e7bb2134dd8f7a685d1f4dcc321251e4741b1c
     }
     // Implicit
     else {
