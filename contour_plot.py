@@ -30,7 +30,7 @@ depth = depth.reshape(Y,X)[::-1]
 
 
 # Plotting
-fig, ax = plt.subplots(figsize=(6,5))
+fig, ax = plt.subplots(figsize=(7,6))
 plt.subplots_adjust(top=0.8)
 
 ax.set_title('Contour plot')
@@ -45,6 +45,8 @@ plt.legend()
 
 # Create contour lines or level curves using matplotlib.pyplot module
 contours = ax.contourf(depth)
-
-# Display the contour plot
+artists, labels = contours.legend_elements()
+ax.legend(handles=artists, labels=labels,
+            loc='upper center', bbox_to_anchor=(0.5, 0),
+          ncol=3, fancybox=True, shadow=True)
 plt.show()
