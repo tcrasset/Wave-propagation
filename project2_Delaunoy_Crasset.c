@@ -20,18 +20,21 @@ void writeTestMap(char* filename){
 
     double a = 5;
     double b = 10;
-    int X = 10;
-    int Y = 20;
+    int X = 20;
+    int Y = 10;
 
     fwrite(&a, sizeof(a),1,fp);
     fwrite(&b, sizeof(b),1,fp);
     fwrite(&X, sizeof(X),1,fp);
     fwrite(&Y, sizeof(Y),1,fp);
 
-    for(int i =0; i < X * Y; i++){
-        double value = (double) i;
-        fwrite(&value, sizeof(value),1,fp); 
-    }
+    for (int row = 0; row < Y; row++){   
+        for (int col = 0; col < X; col++){
+            double value =(double) (Y - row - 1)* X + col; 
+            printf("%lf \n", value);
+            fwrite(&value, sizeof(value),1,fp); 
+        }
+    }    
 
     fclose(fp);
 }
@@ -87,13 +90,9 @@ Parameters* readParameterFile(const char* filename) {
 void printUsefulMapInformation(Map* map){
     double dx = map->a/map->X;
     double dy = map->b/map->Y;
-    printf("X: %lld Y: %lld\n", map->X, map->Y);
+    printf("X: %d Y: %d\n", map->X, map->Y);
     printf("a : %lf, b : %lf \n", map->a, map->b);
     printf("Sampling steps: dx = %lf, dy = %lf\n", dx, dy);
-}
-
-double getGridValueAtSamplingCoordinates(Map* map, int x, int y){
-    return map->grid[map->Y * y + x];
 }
 
 double bilinearInterpolation(Map* map, double x, double y){
@@ -113,7 +112,7 @@ double bilinearInterpolation(Map* map, double x, double y){
 
     // printUsefulMapInformation(map);
     // printf("x : %lf, y : %lf \n", x, y);
-    // printf("k: %lld, l: %lld \n", k, l);
+    // printf("k: %d, l: %d \n", k, l);
 
     double x_k = k * map->dx;
     double x_k1 = (k+1) * map->dx;
@@ -125,10 +124,10 @@ double bilinearInterpolation(Map* map, double x, double y){
     double prod3 = (x - x_k) * (y_l1 - y);
     double prod4 = (x - x_k) * (y - y_l);
 
-    return (prod1 * getGridValueAtSamplingCoordinates(map, k, l)
-            + prod2 * getGridValueAtSamplingCoordinates(map, k, l+1)
-            + prod3 * getGridValueAtSamplingCoordinates(map, k+1, l)
-            + prod4 * getGridValueAtSamplingCoordinates(map, k+1, l+1))/(map->dx*map->dy);
+    return (prod1 * map->grid[k][l]
+            + prod2 * map->grid[k][l+1]
+            + prod3 * map->grid[k+1][l]
+            + prod4 * map->grid[k+1][l+1])/(map->dx*map->dy);
 }
 
 double getGridValueAtDomainCoordinates(Map* map, double x, double y){
@@ -140,19 +139,45 @@ double getGridValueAtDomainCoordinates(Map* map, double x, double y){
 
     // If value already in the grid, use that instead of interpolating
     if(fmod(x, dx) < epsilon && fmod(y, dy)  < epsilon){
-        return getGridValueAtSamplingCoordinates(map, trunc(x/dx), trunc(y/dy)); 
+        return map->grid[(int) trunc(x/dx)][(int) trunc(y/dy)]; 
     } else {
         return bilinearInterpolation(map, x, y);
     }
 }
 
 void printGrid(Map* map){
-    for(int i = 0; i < map->X * map->Y; i++){
-        printf("%lf ", map->grid[i]);
-        if(i != 0 && i % map-> X == 0){
-            printf("\n");
+    for(int i = 0; i < map->X; i++){
+        for(int j = 0; j < map->Y; j++){
+            printf("%lf ", map->grid[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+
+double** allocateDoubleMatrix(int x, int y){
+    double** matrix = malloc(x * sizeof(double*));
+    if(!matrix)
+        return NULL;
+
+    for(int i = 0; i < x; i++){
+        matrix[i] = malloc(y * sizeof(double));
+        if(!matrix[i]){
+            for(int j = i-1; j >= 0; j--)
+                free(matrix[j]);
+            free(matrix);
+            return NULL;
         }
     }
+
+    return matrix;
+}
+
+void freeDoubleMatrix(double** matrix, int x){
+    for(int i = 0; i < x; i++)
+        free(matrix[i]);
+
+    free(matrix);
 }
 
 Map* readMapFile(const char* filename) {
@@ -195,7 +220,7 @@ Map* readMapFile(const char* filename) {
     map->dx = map->a/map->X;
     map->dy = map->b/map->Y;
 
-    map->grid = malloc((map->X * map->Y) * sizeof(double));
+    map->grid = allocateDoubleMatrix(map->X, map->Y);
 
     if (map->grid == NULL) {
         fprintf(stderr, "Unable to allocate memory for the grid\n");
@@ -204,50 +229,27 @@ Map* readMapFile(const char* filename) {
         exit(EXIT_FAILURE);
     }
 
-    // Read the barymetric depth grid from the map file
+    // Read the bathymetry depth grid from the map file
 
     long long i = 0;
-    while (fread(buffer, 8, 1, fp) == 1) {
-    // While we still read 8 contiguous bytes, fill the array
-        map->grid[i] = *((double*)buffer);
-        i++;
+    fread(buffer, 8, 1, fp);
+    for(int row = map->Y-1; row >= 0; row--){
+        for(int col = 0; col < map->X;fread(buffer, 8, 1, fp), col++){
+            printf("(%d,%d)=%lf\n",col,row,*((double*)buffer));
+            map->grid[col][row] = *((double*)buffer);
+        }
     }
-
+    
     fclose(fp);
     return map;
 }
 
-double** allocateDoubleMatrix(int x, int y){
-    double** matrix = malloc(x * sizeof(double*));
-    if(!matrix)
-        return NULL;
-
-    for(int i = 0; i < x; i++){
-        matrix[i] = malloc(y * sizeof(double));
-        if(!matrix[i]){
-            for(int j = i-1; j >= 0; j--)
-                free(matrix[j]);
-            free(matrix);
-            return NULL;
-        }
-    }
-
-    return matrix;
-}
-
-void freeDoubleMatrix(double** matrix, int x){
-    for(int i = 0; i < x; i++)
-        free(matrix[i]);
-
-    free(matrix);
-}
-
 void printDoubleMatrix(double** matrix, int x, int y){
-    for(int j = 0; j < y; j++){
-        for(int i = 0; i < x; i++){
-            fprintf(stderr, "%lf ", matrix[i][j]);
+    for(int i = 0; i < y; i++){
+        for(int j = 0; j < x; j++){
+            fprintf(stdout, "%lf ", matrix[i][j]);
         }
-        fprintf(stderr, "\n");
+        fprintf(stdout, "\n");
     }
 }
 
@@ -459,8 +461,8 @@ int main(int argc, char const* argv[]) {
     Parameters* param = readParameterFile(parameter_file);
     // Map* map = readMapFile("serverFiles/sriLanka.dat");
     Map* map = readMapFile("test_map.dat");
+    printDoubleMatrix(map->grid, map->X, map->Y);
 
-    // printGrid(map);
     // Explicit
     if (scheme == 0) {
         printf("Explicit ");
@@ -499,7 +501,7 @@ int main(int argc, char const* argv[]) {
     }
 
     free(param);
-    free(map->grid);
+    freeDoubleMatrix(map->grid, map->X);
     free(map);
     /* code */
     return 0;

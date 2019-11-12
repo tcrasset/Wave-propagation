@@ -22,8 +22,12 @@ with open("serverFiles/sriLanka.dat", "rb") as binary_file:
     for value in it:
         bytes_data.append(value[0])
 
-depth = np.array(bytes_data[3:]).reshape(X,Y)
-# print(depth)
+# Ignore first 3 values (24 bytes = 8 + 8 + 4 +4)
+depth = np.array(bytes_data[3:])
+
+# Reshape and reverse to have the right orientation
+depth = depth.reshape(Y,X)[::-1]
+
 
 # Plotting
 fig, ax = plt.subplots(figsize=(6,5))
