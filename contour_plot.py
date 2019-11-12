@@ -6,12 +6,13 @@ import pylab
 
 # Extracting data from mapped data
 bytes_data = []
-with open("test_map.dat", "rb") as binary_file:
+with open("serverFiles/sriLanka.dat", "rb") as binary_file:
     data = binary_file.read()
-    a = struct.unpack_from('d',data,0)[0]
+    a = struct.unpack_from('d',data,0)[0] # double
     b = struct.unpack_from('d',data,8)[0]
-    X = struct.unpack_from('q',data,16)[0]
-    Y = struct.unpack_from('q',data,24)[0]
+    X = struct.unpack_from('I',data,16)[0] # int
+    Y = struct.unpack_from('I',data,20)[0]
+
     print(a)
     print(b)
     print(X)
@@ -21,9 +22,8 @@ with open("test_map.dat", "rb") as binary_file:
     for value in it:
         bytes_data.append(value[0])
 
-depth = np.array(bytes_data[4:]).reshape(X,Y)
+depth = np.array(bytes_data[3:]).reshape(X,Y)
 # print(depth)
-
 
 # Plotting
 fig, ax = plt.subplots(figsize=(6,5))
@@ -35,6 +35,8 @@ ax.set_ylabel('Y')
 ax.xaxis.tick_top()
 ax.xaxis.set_label_position('top') 
 plt.gca().invert_yaxis()
+
+plt.legend()
 
 
 # Create contour lines or level curves using matplotlib.pyplot module
