@@ -23,6 +23,11 @@ void writeTestMap(char* filename){
     int X = 20;
     int Y = 10;
 
+    assert(a > 0);
+    assert(b > 0);
+    assert(X > 0);
+    assert(Y > 0);
+
     fwrite(&a, sizeof(a),1,fp);
     fwrite(&b, sizeof(b),1,fp);
     fwrite(&X, sizeof(X),1,fp);
@@ -131,7 +136,9 @@ double bilinearInterpolation(Map* map, double x, double y){
 }
 
 double getGridValueAtDomainCoordinates(Map* map, double x, double y){
-    fprintf(stderr, "x = %lf, y = %lf\n", x, y);
+    assert(x > 0);
+    assert(y > 0);
+    fprintf(stdout, "x = %lf, y = %lf\n", x, y);
     double epsilon = 10e-6;
     // Sampling step
     double dx = map->a/map->X;
@@ -146,6 +153,7 @@ double getGridValueAtDomainCoordinates(Map* map, double x, double y){
 }
 
 void printGrid(Map* map){
+    assert(map);
     for(int i = 0; i < map->X; i++){
         for(int j = 0; j < map->Y; j++){
             printf("%lf ", map->grid[i][j]);
@@ -156,6 +164,8 @@ void printGrid(Map* map){
 
 
 double** allocateDoubleMatrix(int x, int y){
+    assert(x > 0);
+    assert(y > 0);
     double** matrix = malloc(x * sizeof(double*));
     if(!matrix)
         return NULL;
@@ -174,9 +184,10 @@ double** allocateDoubleMatrix(int x, int y){
 }
 
 void freeDoubleMatrix(double** matrix, int x){
+    assert(x > 0);
+    assert(matrix);
     for(int i = 0; i < x; i++)
         free(matrix[i]);
-
     free(matrix);
 }
 
@@ -245,6 +256,10 @@ Map* readMapFile(const char* filename) {
 }
 
 void printDoubleMatrix(double** matrix, int x, int y){
+    assert(x > 0);
+    assert(y > 0);
+    assert(matrix != NULL);
+
     for(int i = 0; i < y; i++){
         for(int j = 0; j < x; j++){
             fprintf(stdout, "%lf ", matrix[i][j]);
@@ -254,6 +269,10 @@ void printDoubleMatrix(double** matrix, int x, int y){
 }
 
 int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, double*** v){
+
+    assert(map);
+    assert(params);
+
     int xSize = (int)(map->a / params->deltaX);
     int ySize = (int)(map->b / params->deltaY);
     fprintf(stderr, "xSize = %d ySize = %d \n", xSize, ySize);
