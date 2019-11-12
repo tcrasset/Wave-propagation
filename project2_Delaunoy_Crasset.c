@@ -20,8 +20,8 @@ void writeTestMap(char* filename){
 
     double a = 5;
     double b = 10;
-    long long X = 10;
-    long long Y = 20;
+    int X = 10;
+    int Y = 20;
 
     fwrite(&a, sizeof(a),1,fp);
     fwrite(&b, sizeof(b),1,fp);
@@ -36,6 +36,20 @@ void writeTestMap(char* filename){
     fclose(fp);
 }
 
+SparseMatrix* toSparseMatrix(double** matrix, int xSize, int ySize){
+
+    for(int i = 0; i < xSize; i++){
+        for (int j = 0; j < ySize; j++){
+            if(matrix[i][j] != 0){
+
+            }
+        }
+        
+    }
+
+}
+
+
 Parameters* readParameterFile(const char* filename) {
     FILE* fp;
 
@@ -49,7 +63,7 @@ Parameters* readParameterFile(const char* filename) {
 
     if (params == NULL) {
         fprintf(stderr, "Unable to allocate memory for parameters\n");
-        free(fp);
+        fclose(fp);
         exit(EXIT_FAILURE);
     }
 
@@ -78,7 +92,7 @@ void printUsefulMapInformation(Map* map){
     printf("Sampling steps: dx = %lf, dy = %lf\n", dx, dy);
 }
 
-double getGridValueAtSamplingCoordinates(Map* map, long long x, long long y){
+double getGridValueAtSamplingCoordinates(Map* map, int x, int y){
     return map->grid[map->Y * y + x];
 }
 
@@ -94,8 +108,8 @@ double bilinearInterpolation(Map* map, double x, double y){
     // compile your code using the flag -lm to add it at compile time like this:
     // gcc -g yourfile.c -lm -o yourOutFile
     // i.e. the flag should come after the c code
-    long long k = trunc(x/map->dx);
-    long long l = trunc(y/map->dy);
+    int k = trunc(x/map->dx);
+    int l = trunc(y/map->dy);
 
     // printUsefulMapInformation(map);
     // printf("x : %lf, y : %lf \n", x, y);
@@ -159,7 +173,7 @@ Map* readMapFile(const char* filename) {
 
     if (map == NULL) {
         fprintf(stderr, "Unable to allocate memory for the map\n");
-        free(fp);
+        fclose(fp);
         exit(EXIT_FAILURE);
     }
 
@@ -171,11 +185,11 @@ Map* readMapFile(const char* filename) {
     fread(buffer, 8, 1, fp);
     map->b = *((double*)buffer);
 
-    fread(buffer, 8, 1, fp);
-    map->X = *((long long*)buffer);
+    fread(buffer, 4, 1, fp);
+    map->X = *((int*)buffer);
 
-    fread(buffer, 8, 1, fp);
-    map->Y = *((long long*)buffer);
+    fread(buffer, 4, 1, fp);
+    map->Y = *((int*)buffer);
 
     // Sampling step
     map->dx = map->a/map->X;
@@ -451,19 +465,16 @@ int main(int argc, char const* argv[]) {
     writeTestMap("test_map.dat");
 
     Parameters* param = readParameterFile(parameter_file);
+    // Map* map = readMapFile("serverFiles/sriLanka.dat");
     Map* map = readMapFile("test_map.dat");
 
-    printf("Bilinear interp : %lf\n", bilinearInterpolation(map, 1.9, 0.2));
-
-    printUsefulMapInformation(map);
-    printGrid(map);
-    printf("\n");
-
+    // printGrid(map);
     // Explicit
     if (scheme == 0) {
         printf("Explicit ");
         printf("%s %s %u \n", parameter_file, map_file, scheme);
         
+<<<<<<< HEAD
         double** nu;
         double** u;
         double** v;
@@ -489,12 +500,33 @@ int main(int argc, char const* argv[]) {
         freeDoubleMatrix(u, xSize + 2);
         freeDoubleMatrix(v, xSize + 1);
 
+=======
+        // double** nu;
+        // double** u;
+        // double** v;
+
+        // if(eulerExplicit(map, param, &nu, &u, &v) == -1){
+        //     fprintf(stderr, "error in euler function\n");
+        //     free(param);
+        //     free(map->grid);
+        //     free(map);
+        // }
+
+        // int xSize = (int)(map->a / param->deltaX);
+        // int ySize = (int)(map->b / param->deltaY);
+
+        // printf("nu\n");
+        // printDoubleMatrix(nu, xSize + 1, ySize + 1);
+        // printf("u\n");
+        // printDoubleMatrix(u, xSize + 2, xSize + 1);
+        // printf("v\n");
+        // printDoubleMatrix(v, xSize + 1, ySize + 2);
+>>>>>>> 73e7bb2134dd8f7a685d1f4dcc321251e4741b1c
     }
     // Implicit
     else {
         printf("Implicit ");
         printf("%s %s %u", parameter_file, map_file, scheme);
-        return 0;
     }
 
     free(param);
