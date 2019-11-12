@@ -474,7 +474,6 @@ int main(int argc, char const* argv[]) {
         printf("Explicit ");
         printf("%s %s %u \n", parameter_file, map_file, scheme);
         
-<<<<<<< HEAD
         double** nu;
         double** u;
         double** v;
@@ -500,28 +499,6 @@ int main(int argc, char const* argv[]) {
         freeDoubleMatrix(u, xSize + 2);
         freeDoubleMatrix(v, xSize + 1);
 
-=======
-        // double** nu;
-        // double** u;
-        // double** v;
-
-        // if(eulerExplicit(map, param, &nu, &u, &v) == -1){
-        //     fprintf(stderr, "error in euler function\n");
-        //     free(param);
-        //     free(map->grid);
-        //     free(map);
-        // }
-
-        // int xSize = (int)(map->a / param->deltaX);
-        // int ySize = (int)(map->b / param->deltaY);
-
-        // printf("nu\n");
-        // printDoubleMatrix(nu, xSize + 1, ySize + 1);
-        // printf("u\n");
-        // printDoubleMatrix(u, xSize + 2, xSize + 1);
-        // printf("v\n");
-        // printDoubleMatrix(v, xSize + 1, ySize + 2);
->>>>>>> 73e7bb2134dd8f7a685d1f4dcc321251e4741b1c
     }
     // Implicit
     else {
