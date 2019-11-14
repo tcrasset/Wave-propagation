@@ -247,7 +247,7 @@ Map* readMapFile(const char* filename) {
 void printDoubleMatrix(double** matrix, int x, int y){
     for(int i = 0; i < y; i++){
         for(int j = 0; j < x; j++){
-            fprintf(stdout, "%lf ", matrix[i][j]);
+            fprintf(stdout, "%lf ", matrix[j][i]);
         }
         fprintf(stdout, "\n");
     }
