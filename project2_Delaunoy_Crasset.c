@@ -8,7 +8,7 @@
 
 #define M_PI 3.14159265358979323846
 
-void writeTestMap(char* filename){
+void writeTestMap(char* filename, int debug){
 
     FILE* fp;
 
@@ -36,7 +36,8 @@ void writeTestMap(char* filename){
     for (int row = 0; row < Y; row++){   
         for (int col = 0; col < X; col++){
             double value =(double) (Y - row - 1)* X + col; 
-            printf("%lf \n", value);
+            if(debug == 1)
+                printf("%lf \n", value);
             fwrite(&value, sizeof(value),1,fp); 
         }
     }    
@@ -128,16 +129,34 @@ double bilinearInterpolation(Map* map, double x, double y){
     double prod3 = (x - x_k) * (y_l1 - y);
     double prod4 = (x - x_k) * (y - y_l);
 
+    double return_value = prod1 * map->grid[k][l];  
+    double epsilon = 10e-6;
+
+    // Robust != statement
+    if(fabs(x - map->a) > epsilon)
+        return_value += prod3 * map->grid[k+1][l];
+
+    if(fabs(y - map->b) > epsilon)
+        return_value += prod2 * map->grid[k][l+1];
+
+    if(fabs(x - map->a) > epsilon && fabs(y - map->b) > epsilon)
+        return_value += prod4 * map->grid[k+1][l+1];
+
+    return_value /= map->dx*map->dy;
+
+    return return_value;
+
+    /*
     return (prod1 * map->grid[k][l]
             + prod2 * map->grid[k][l+1]
             + prod3 * map->grid[k+1][l]
             + prod4 * map->grid[k+1][l+1])/(map->dx*map->dy);
+    */
 }
 
 double getGridValueAtDomainCoordinates(Map* map, double x, double y){
     assert(x >= 0);
     assert(y >= 0);
-    fprintf(stdout, "x = %lf, y = %lf\n", x, y);
     double epsilon = 10e-6;
     // Sampling step
 
@@ -188,7 +207,7 @@ void freeDoubleMatrix(double** matrix, int x){
     free(matrix);
 }
 
-Map* readMapFile(const char* filename) {
+Map* readMapFile(const char* filename, int debug) {
     FILE* fp;
     char buffer[8];
 
@@ -243,7 +262,8 @@ Map* readMapFile(const char* filename) {
     fread(buffer, 8, 1, fp);
     for(int row = map->Y-1; row >= 0; row--){
         for(int col = 0; col < map->X;fread(buffer, 8, 1, fp), col++){
-            printf("(%d,%d)=%lf\n",col,row,*((double*)buffer));
+            if(debug == 1)
+                printf("(%d,%d)=%lf\n",col,row,*((double*)buffer));
             map->grid[col][row] = *((double*)buffer);
         }
     }
@@ -265,14 +285,15 @@ void printDoubleMatrix(double** matrix, int x, int y){
     }
 }
 
-int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, double*** v){
+int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, double*** v, int debug){
 
     assert(map);
     assert(params);
 
     int xSize = (int)(map->a / params->deltaX);
     int ySize = (int)(map->b / params->deltaY);
-    fprintf(stdout, "xSize = %d ySize = %d \n", xSize, ySize);
+    if(debug == 1)
+        fprintf(stdout, "xSize = %d ySize = %d \n", xSize, ySize);
 
     // Allocate memory
     // nu in {0, 1, ..., a/dx}X{0, 1, ..., b/dy}
@@ -342,9 +363,11 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
             h[i][j] = getGridValueAtDomainCoordinates(map, ((float)(i * xSize)/(xSize + 1)) * (params->deltaX / 2), ((float)(j * ySize)/(ySize + 1)) * (params->deltaY / 2));
     }
 
-    printf("h\n");
-    printDoubleMatrix(h, 2*xSize+3, 2*ySize+3);
-    printf("apres h\n");
+    if(debug == 1){
+        printf("h\n");
+        printDoubleMatrix(h, 2*xSize+3, 2*ySize+3);
+        printf("apres h\n");
+    }
 
     for(int i = 0; i < xSize + 1; i++){
         for(int j = 0; j < ySize + 1; j++)
@@ -362,7 +385,8 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
     }
 
     for(unsigned int t = 1; t <= params->TMax; t++){
-        printf("t = %u\n", t);
+        if(debug == 1)
+            printf("t = %u\n", t);
 
         // Compute nuNext
         // Separate for loop for cache optimization
@@ -420,18 +444,20 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
             }
         }
 
-        printf("nuCurr\n");
-        printDoubleMatrix(nuCurr, xSize + 1, ySize + 1);
-        printf("nuNext\n");
-        printDoubleMatrix(nuNext, xSize + 1, ySize + 1);
-        printf("uCurr\n");
-        printDoubleMatrix(uCurr, xSize + 2, ySize + 1);
-        printf("uNext\n");
-        printDoubleMatrix(uNext, xSize + 2, ySize + 1);
-        printf("vCurr\n");
-        printDoubleMatrix(vCurr, xSize + 1, ySize + 2);
-        printf("vNext\n");
-        printDoubleMatrix(vNext, xSize + 1, ySize + 2);
+        if(debug == 1){
+            printf("nuCurr\n");
+            printDoubleMatrix(nuCurr, xSize + 1, ySize + 1);
+            printf("nuNext\n");
+            printDoubleMatrix(nuNext, xSize + 1, ySize + 1);
+            printf("uCurr\n");
+            printDoubleMatrix(uCurr, xSize + 2, ySize + 1);
+            printf("uNext\n");
+            printDoubleMatrix(uNext, xSize + 2, ySize + 1);
+            printf("vCurr\n");
+            printDoubleMatrix(vCurr, xSize + 1, ySize + 2);
+            printf("vNext\n");
+            printDoubleMatrix(vNext, xSize + 1, ySize + 2);
+        }
 
         // Go to next step
         double** tmp;
@@ -464,20 +490,29 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
 
 int main(int argc, char const* argv[]) {
     // Check number of arguments
-    assert(argc == 4);
+    int debug;
+    assert(argc >= 4);
     const char* parameter_file = argv[1];
     const char* map_file = argv[2];
     const unsigned int scheme = atoi(argv[3]);
 
+    if(argc == 4)
+        debug = 0;
+    else{
+        assert(argc == 5);
+        debug = atoi(argv[4]);
+    }
+
     //Check argument validity
     assert((scheme == 0) || (scheme == 1));
 
-    writeTestMap("test_map.dat");
+    writeTestMap("test_map.dat", debug);
 
     Parameters* param = readParameterFile(parameter_file);
     // Map* map = readMapFile("serverFiles/sriLanka.dat");
-    Map* map = readMapFile("test_map.dat");
-    printDoubleMatrix(map->grid, map->X, map->Y);
+    Map* map = readMapFile("test_map.dat", debug);
+    if(debug == 1)
+        printDoubleMatrix(map->grid, map->X, map->Y);
 
     // Explicit
     if (scheme == 0) {
@@ -488,7 +523,7 @@ int main(int argc, char const* argv[]) {
         double** u;
         double** v;
 
-        if(eulerExplicit(map, param, &nu, &u, &v) == -1){
+        if(eulerExplicit(map, param, &nu, &u, &v, debug) == -1){
             fprintf(stderr, "error in euler function\n");
             free(param);
             free(map->grid);

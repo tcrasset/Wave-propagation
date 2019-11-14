@@ -32,12 +32,13 @@ typedef struct SparseMatrix {
     unsigned int* v;
 } SparseMatrix;
 
-void writeTestMap(char* filename);
+void writeTestMap(char* filename, int debug);
 Parameters* readParameterFile(const char* filename);
 void printUsefulMapInformation(Map* map);
 double bilinearInterpolation(Map* map, double x, double y);
 double getGridValueAtDomainCoordinates(Map* map, double x, double y);
 void printGrid(Map* map);
-Map* readMapFile(const char* filename);
+Map* readMapFile(const char* filename, int debug);
+int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, double*** v, int debug);
 
 #endif  // MAIN_H_
