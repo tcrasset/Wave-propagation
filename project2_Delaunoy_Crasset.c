@@ -23,6 +23,11 @@ void writeTestMap(char* filename){
     int X = 20;
     int Y = 10;
 
+    assert(a > 0);
+    assert(b > 0);
+    assert(X > 0);
+    assert(Y > 0);
+
     fwrite(&a, sizeof(a),1,fp);
     fwrite(&b, sizeof(b),1,fp);
     fwrite(&X, sizeof(X),1,fp);
@@ -88,11 +93,10 @@ Parameters* readParameterFile(const char* filename) {
 }
 
 void printUsefulMapInformation(Map* map){
-    double dx = map->a/map->X;
-    double dy = map->b/map->Y;
+
     printf("X: %d Y: %d\n", map->X, map->Y);
     printf("a : %lf, b : %lf \n", map->a, map->b);
-    printf("Sampling steps: dx = %lf, dy = %lf\n", dx, dy);
+    printf("Sampling steps: dx = %lf, dy = %lf\n", map->dx, map->dy);
 }
 
 double bilinearInterpolation(Map* map, double x, double y){
@@ -131,21 +135,22 @@ double bilinearInterpolation(Map* map, double x, double y){
 }
 
 double getGridValueAtDomainCoordinates(Map* map, double x, double y){
-    fprintf(stderr, "x = %lf, y = %lf\n", x, y);
+    assert(x >= 0);
+    assert(y >= 0);
+    fprintf(stdout, "x = %lf, y = %lf\n", x, y);
     double epsilon = 10e-6;
     // Sampling step
-    double dx = map->a/map->X;
-    double dy = map->b/map->Y;
 
     // If value already in the grid, use that instead of interpolating
-    if(fmod(x, dx) < epsilon && fmod(y, dy)  < epsilon){
-        return map->grid[(int) trunc(x/dx)][(int) trunc(y/dy)]; 
+    if(fmod(x, map->dx) < epsilon && fmod(y, map->dy)  < epsilon){
+        return map->grid[(int) trunc(x/map->dx)][(int) trunc(y/map->dy)]; 
     } else {
         return bilinearInterpolation(map, x, y);
     }
 }
 
 void printGrid(Map* map){
+    assert(map);
     for(int i = 0; i < map->X; i++){
         for(int j = 0; j < map->Y; j++){
             printf("%lf ", map->grid[i][j]);
@@ -156,6 +161,8 @@ void printGrid(Map* map){
 
 
 double** allocateDoubleMatrix(int x, int y){
+    assert(x > 0);
+    assert(y > 0);
     double** matrix = malloc(x * sizeof(double*));
     if(!matrix)
         return NULL;
@@ -174,9 +181,10 @@ double** allocateDoubleMatrix(int x, int y){
 }
 
 void freeDoubleMatrix(double** matrix, int x){
+    assert(x > 0);
+    assert(matrix);
     for(int i = 0; i < x; i++)
         free(matrix[i]);
-
     free(matrix);
 }
 
@@ -217,8 +225,8 @@ Map* readMapFile(const char* filename) {
     map->Y = *((int*)buffer);
 
     // Sampling step
-    map->dx = map->a/map->X;
-    map->dy = map->b/map->Y;
+    map->dx = map->a/(map->X -1);
+    map->dy = map->b/(map->Y -1);
 
     map->grid = allocateDoubleMatrix(map->X, map->Y);
 
@@ -245,6 +253,10 @@ Map* readMapFile(const char* filename) {
 }
 
 void printDoubleMatrix(double** matrix, int x, int y){
+    assert(x > 0);
+    assert(y > 0);
+    assert(matrix != NULL);
+
     for(int i = 0; i < y; i++){
         for(int j = 0; j < x; j++){
             fprintf(stdout, "%lf ", matrix[j][i]);
@@ -254,9 +266,13 @@ void printDoubleMatrix(double** matrix, int x, int y){
 }
 
 int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, double*** v){
+
+    assert(map);
+    assert(params);
+
     int xSize = (int)(map->a / params->deltaX);
     int ySize = (int)(map->b / params->deltaY);
-    fprintf(stderr, "xSize = %d ySize = %d \n", xSize, ySize);
+    fprintf(stdout, "xSize = %d ySize = %d \n", xSize, ySize);
 
     // Allocate memory
     // nu in {0, 1, ..., a/dx}X{0, 1, ..., b/dy}
@@ -477,6 +493,8 @@ int main(int argc, char const* argv[]) {
             free(param);
             free(map->grid);
             free(map);
+
+            //exit(EXIT_FAILURE)
         }
 
         int xSize = (int)(map->a / param->deltaX);
