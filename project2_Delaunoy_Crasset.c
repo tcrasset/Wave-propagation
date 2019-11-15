@@ -45,6 +45,33 @@ void writeTestMap(char* filename, int debug){
     fclose(fp);
 }
 
+
+void writeResultMatrix(char* filename, int xsize, int ysize,
+                         double** matrix, int debug){
+    
+    FILE* fp;
+
+    fp = fopen(filename, "wb");
+    if (fp == NULL) {
+        fprintf(stderr, "Unable to open file %s\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    fwrite(&xsize, sizeof(xsize),1,fp);
+    fwrite(&ysize, sizeof(ysize),1,fp);
+
+    for(int row = ysize -1; row >= 0; row--){
+        for(int col = 0; col < xsize;col++){
+            if(debug == 1){
+                printf("%lf \n", matrix[col][row]);
+            }
+            fwrite(&matrix[col][row], 8,1,fp);
+        }
+    }
+
+    fclose(fp);
+}
+
 SparseMatrix* toSparseMatrix(double** matrix, int xSize, int ySize){
 
     for(int i = 0; i < xSize; i++){
@@ -538,9 +565,11 @@ int main(int argc, char const* argv[]) {
         printf("nu\n");
         printDoubleMatrix(nu, xSize + 1, ySize + 1);
         printf("u\n");
-        printDoubleMatrix(u, xSize + 2, xSize + 1);
+        printDoubleMatrix(u, xSize + 2, ySize + 1);
         printf("v\n");
         printDoubleMatrix(v, xSize + 1, ySize + 2);
+
+        writeResultMatrix("eta_test.dat", xSize+1, ySize+1, nu, debug);
 
         freeDoubleMatrix(nu, xSize + 1);
         freeDoubleMatrix(u, xSize + 2);
