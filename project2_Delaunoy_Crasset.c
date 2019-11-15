@@ -312,7 +312,7 @@ void printDoubleMatrix(double** matrix, int x, int y){
     }
 }
 
-int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, double*** v, int debug){
+int eulerExplicit(Map* map, Parameters* params, double*** eta, double*** u, double*** v, int debug){
 
     assert(map);
     assert(params);
@@ -323,30 +323,30 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
         fprintf(stdout, "xSize = %d ySize = %d \n", xSize, ySize);
 
     // Allocate memory
-    // nu in {0, 1, ..., a/dx}X{0, 1, ..., b/dy}
-    double** nuCurr = allocateDoubleMatrix(xSize + 1, ySize + 1);
-    if(!nuCurr){
+    // eta in {0, 1, ..., a/dx}X{0, 1, ..., b/dy}
+    double** etaCurr = allocateDoubleMatrix(xSize + 1, ySize + 1);
+    if(!etaCurr){
         return -1;
     }
 
-    double** nuNext = allocateDoubleMatrix(xSize + 1, ySize + 1);
-    if(!nuNext){
-        freeDoubleMatrix(nuCurr, xSize + 1);
+    double** etaNext = allocateDoubleMatrix(xSize + 1, ySize + 1);
+    if(!etaNext){
+        freeDoubleMatrix(etaCurr, xSize + 1);
         return -1;
     }
 
     // u in {-1/2, 1/2, ..., a/dx + 1/2}X{0, 1, ..., b/dy}
     double** uCurr = allocateDoubleMatrix(xSize + 2, ySize + 1);
     if(!uCurr){
-        freeDoubleMatrix(nuCurr, xSize + 1);
-        freeDoubleMatrix(nuNext, xSize + 1);
+        freeDoubleMatrix(etaCurr, xSize + 1);
+        freeDoubleMatrix(etaNext, xSize + 1);
         return -1;
     }
 
     double** uNext = allocateDoubleMatrix(xSize + 2, ySize + 1);
     if(!uNext){
-        freeDoubleMatrix(nuCurr, xSize + 1);
-        freeDoubleMatrix(nuNext, xSize + 1);
+        freeDoubleMatrix(etaCurr, xSize + 1);
+        freeDoubleMatrix(etaNext, xSize + 1);
         freeDoubleMatrix(uCurr, xSize + 2);
         return -1;
     }
@@ -354,8 +354,8 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
     // v in {0, 1, .., a/dx}X{-1/2, 1/2, ..., b/dy + 1/2}
     double** vCurr = allocateDoubleMatrix(xSize + 1, ySize + 2);
     if(!vCurr){
-        freeDoubleMatrix(nuCurr, xSize + 1);
-        freeDoubleMatrix(nuNext, xSize + 1);
+        freeDoubleMatrix(etaCurr, xSize + 1);
+        freeDoubleMatrix(etaNext, xSize + 1);
         freeDoubleMatrix(uCurr, xSize + 2);
         freeDoubleMatrix(uNext, xSize + 2);
         return -1;
@@ -363,8 +363,8 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
 
     double** vNext = allocateDoubleMatrix(xSize + 1, ySize + 2);
     if(!vNext){
-        freeDoubleMatrix(nuCurr, xSize + 1);
-        freeDoubleMatrix(nuNext, xSize + 1);
+        freeDoubleMatrix(etaCurr, xSize + 1);
+        freeDoubleMatrix(etaNext, xSize + 1);
         freeDoubleMatrix(uCurr, xSize + 2);
         freeDoubleMatrix(uNext, xSize + 2);
         freeDoubleMatrix(vCurr, xSize + 1);
@@ -374,8 +374,8 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
     // h in {-1/2, 0, 1/2, ..., a/dx, a/dx + 1/2}X{-1/2, 0, 1/2, ..., b/dy, b/dy + 1/2}
     double** h = allocateDoubleMatrix(2 * xSize + 3, 2 * ySize + 3);
     if(!h){
-        freeDoubleMatrix(nuCurr, xSize + 1);
-        freeDoubleMatrix(nuNext, xSize + 1);
+        freeDoubleMatrix(etaCurr, xSize + 1);
+        freeDoubleMatrix(etaNext, xSize + 1);
         freeDoubleMatrix(uCurr, xSize + 2);
         freeDoubleMatrix(uNext, xSize + 2);
         freeDoubleMatrix(vCurr, xSize + 1);
@@ -398,7 +398,7 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
 
     for(int i = 0; i < xSize + 1; i++){
         for(int j = 0; j < ySize + 1; j++)
-            nuCurr[i][j] = 0;
+            etaCurr[i][j] = 0;
     }
 
     for(int i = 0; i < xSize + 2; i++){
@@ -412,30 +412,31 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
     }
 
     for(unsigned int t = 1; t <= params->TMax; t++){
-        if(debug == 1)
+        if(debug == 1){   
             printf("t = %u\n", t);
+        }
 
-        // Compute nuNext
+        // Compute etaNext
         // Separate for loop for cache optimization
         /*
         for(int i = 0; i < xSize + 1; i++)
-            nuNext[i][0] = 0;
+            etaNext[i][0] = 0;
 
         for(int i = 0; i < xSize + 1; i++)
-            nuNext[i][ySize] = 0;
+            etaNext[i][ySize] = 0;
 
         for(int i = 0; i < ySize + 1; i++)
-            nuNext[0][i] = 0;
+            etaNext[0][i] = 0;
 
         for(int i = 0; i < ySize + 1; i++)
-            nuNext[xSize][i] = 0;
+            etaNext[xSize][i] = 0;
         */
 
         for(int i = 0; i < xSize + 1; i++){
             for(int j = 0; j < ySize + 1; j++){
-                nuNext[i][j] = (-(h[2*i+2][2*j+1] * uCurr[i+1][j] - h[2*i][2*j+1] * uCurr[i][j]) / params->deltaX 
+                etaNext[i][j] = (-(h[2*i+2][2*j+1] * uCurr[i+1][j] - h[2*i][2*j+1] * uCurr[i][j]) / params->deltaX 
                                 -(h[2*i+1][2*j+2] * vCurr[i][j+1] - h[2*i+1][2*j] * vCurr[i][j]) / params->deltaY)
-                                * params->deltaT + nuCurr[i][j];
+                                * params->deltaT + etaCurr[i][j];
             }
         }
 
@@ -448,7 +449,7 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
 
         for(int i = 1; i < xSize + 1; i++){
             for(int j = 0; j < ySize + 1; j++){
-                uNext[i][j] = (-params->g * (nuCurr[i][j] - nuCurr[i-1][j]) / params->deltaX
+                uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
                                -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
             }
         }
@@ -466,16 +467,16 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
 
         for(int i = 0; i < xSize + 1; i++){
             for(int j = 1; j < ySize + 1; j++){
-                vNext[i][j] = (-params->g * (nuCurr[i][j] - nuCurr[i][j-1]) / params->deltaY
+                vNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i][j-1]) / params->deltaY
                                -params->gamma * vCurr[i][j]) * params->deltaT + vCurr[i][j];
             }
         }
 
         if(debug == 1){
-            printf("nuCurr\n");
-            printDoubleMatrix(nuCurr, xSize + 1, ySize + 1);
-            printf("nuNext\n");
-            printDoubleMatrix(nuNext, xSize + 1, ySize + 1);
+            printf("etaCurr\n");
+            printDoubleMatrix(etaCurr, xSize + 1, ySize + 1);
+            printf("etaNext\n");
+            printDoubleMatrix(etaNext, xSize + 1, ySize + 1);
             printf("uCurr\n");
             printDoubleMatrix(uCurr, xSize + 2, ySize + 1);
             printf("uNext\n");
@@ -489,9 +490,9 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
         // Go to next step
         double** tmp;
         
-        tmp = nuCurr;
-        nuCurr = nuNext;
-        nuNext = tmp;
+        tmp = etaCurr;
+        etaCurr = etaNext;
+        etaNext = tmp;
 
         tmp = uCurr;
         uCurr = uNext;
@@ -503,11 +504,11 @@ int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, doubl
 
     }
 
-    *nu = nuCurr;
+    *eta = etaCurr;
     *u = uCurr;
     *v = vCurr;
     
-    freeDoubleMatrix(nuNext, xSize + 1);
+    freeDoubleMatrix(etaNext, xSize + 1);
     freeDoubleMatrix(uNext, xSize + 2);
     freeDoubleMatrix(vNext, xSize + 1);
     freeDoubleMatrix(h, 2 * xSize + 3);
@@ -536,7 +537,7 @@ int main(int argc, char const* argv[]) {
     writeTestMap("test_map.dat", debug);
 
     Parameters* param = readParameterFile(parameter_file);
-    // Map* map = readMapFile("serverFiles/sriLanka.dat");
+    // Map* map = readMapFile("serverFiles/refraction.dat", debug);
     Map* map = readMapFile("test_map.dat", debug);
     if(debug == 1)
         printDoubleMatrix(map->grid, map->X, map->Y);
@@ -546,11 +547,11 @@ int main(int argc, char const* argv[]) {
         printf("Explicit ");
         printf("%s %s %u \n", parameter_file, map_file, scheme);
         
-        double** nu;
+        double** eta;
         double** u;
         double** v;
 
-        if(eulerExplicit(map, param, &nu, &u, &v, debug) == -1){
+        if(eulerExplicit(map, param, &eta, &u, &v, debug) == -1){
             fprintf(stderr, "error in euler function\n");
             free(param);
             free(map->grid);
@@ -562,16 +563,18 @@ int main(int argc, char const* argv[]) {
         int xSize = (int)(map->a / param->deltaX);
         int ySize = (int)(map->b / param->deltaY);
 
-        printf("nu\n");
-        printDoubleMatrix(nu, xSize + 1, ySize + 1);
-        printf("u\n");
-        printDoubleMatrix(u, xSize + 2, ySize + 1);
-        printf("v\n");
-        printDoubleMatrix(v, xSize + 1, ySize + 2);
+        if(debug == 1){
+            printf("eta\n");
+            printDoubleMatrix(eta, xSize + 1, ySize + 1);
+            printf("u\n");
+            printDoubleMatrix(u, xSize + 2, ySize + 1);
+            printf("v\n");
+            printDoubleMatrix(v, xSize + 1, ySize + 2);
+        }
 
-        writeResultMatrix("eta_test.dat", xSize+1, ySize+1, nu, debug);
+        writeResultMatrix("eta_test.dat", xSize+1, ySize+1, eta, debug);
 
-        freeDoubleMatrix(nu, xSize + 1);
+        freeDoubleMatrix(eta, xSize + 1);
         freeDoubleMatrix(u, xSize + 2);
         freeDoubleMatrix(v, xSize + 1);
 

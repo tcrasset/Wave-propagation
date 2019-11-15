@@ -41,6 +41,6 @@ double bilinearInterpolation(Map* map, double x, double y);
 double getGridValueAtDomainCoordinates(Map* map, double x, double y);
 void printGrid(Map* map);
 Map* readMapFile(const char* filename, int debug);
-int eulerExplicit(Map* map, Parameters* params, double*** nu, double*** u, double*** v, int debug);
+int eulerExplicit(Map* map, Parameters* params, double*** eta, double*** u, double*** v, int debug);
 
 #endif  // MAIN_H_
