@@ -33,6 +33,8 @@ typedef struct SparseMatrix {
 } SparseMatrix;
 
 void writeTestMap(char* filename, int debug);
+void writeResultMatrix(char* filename, int xsize, int ysize, double** matrix, int debug);
+
 Parameters* readParameterFile(const char* filename);
 void printUsefulMapInformation(Map* map);
 double bilinearInterpolation(Map* map, double x, double y);
