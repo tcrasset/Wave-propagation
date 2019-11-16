@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <sys/types.h>
-
+#include <mpi.h>
 #include "project2_Delaunoy_Crasset.h"
 
 #define M_PI 3.14159265358979323846
@@ -432,6 +432,21 @@ int eulerExplicit(Map* map, Parameters* params, double*** eta, double*** u, doub
             etaNext[xSize][i] = 0;
         */
 
+        // For h, 1 step in theory is 2 step in the matrix (because we go up by 1/2)
+        // Moreover, full index j in theory are 2*j+1 in the matrix
+        // Thus, j - 1/2 in theory is 2*j and
+        // j + 1/2 in theory is 2*j + 2
+        // Except that in theory, the indices start at -1/2
+        // and here they start at 0
+        // Example: [... j - 1/2,   j,  j + 1/2] in theory
+        //          [... 2j,     2j + 1,   2j + 2]
+
+        // For u and v, 1 step in theory is 1 here in the matrix
+        // Except that in theory, the indices start at -1/2
+        // and here they start at 0.
+        // As u is in the x direction, we have indices j that
+        // Example: [... i - 1/2,   /,  i + 1/2] in theory
+        //          [... i,     /,   i + 1]
         for(int i = 0; i < xSize + 1; i++){
             for(int j = 0; j < ySize + 1; j++){
                 etaNext[i][j] = (-(h[2*i+2][2*j+1] * uCurr[i+1][j] - h[2*i][2*j+1] * uCurr[i][j]) / params->deltaX 
@@ -516,7 +531,7 @@ int eulerExplicit(Map* map, Parameters* params, double*** eta, double*** u, doub
     return 0;
 }
 
-int main(int argc, char const* argv[]) {
+int main(int argc, char* argv[]) {
     // Check number of arguments
     int debug;
     assert(argc >= 4);
@@ -533,6 +548,8 @@ int main(int argc, char const* argv[]) {
 
     //Check argument validity
     assert((scheme == 0) || (scheme == 1));
+
+    MPI_Init(&argc,&argv);
 
     writeTestMap("test_map.dat", debug);
 
@@ -584,6 +601,8 @@ int main(int argc, char const* argv[]) {
         printf("Implicit ");
         printf("%s %s %u", parameter_file, map_file, scheme);
     }
+
+    MPI_Finalize();
 
     free(param);
     freeDoubleMatrix(map->grid, map->X);
