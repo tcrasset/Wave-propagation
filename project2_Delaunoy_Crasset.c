@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <mpi.h>
 #include "project2_Delaunoy_Crasset.h"
 
@@ -446,7 +447,7 @@ int eulerExplicit(Map* map, Parameters* params, double*** eta, double*** u, doub
         // For u and v, 1 step in theory is 1 here in the matrix
         // Except that in theory, the indices start at -1/2
         // and here they start at 0.
-        // As u is in the x direction, we have indices j that
+        // As u is in the x direction, we have indices i that
         // Example: [... i - 1/2,   /,  i + 1/2] in theory
         //          [... i,     /,   i + 1]
         for(int i = 0; i < xSize + 1; i++){
@@ -551,8 +552,8 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     int endval_Y = (ySize * (myrank+1)) / (nbproc);
 
     if(debug == 1 && myrank == debug_rank){
-        fprintf(stdout, "Process %d :xSize = %d mpi_ysize = %d, endval_y - startval_Y = %d  \n", myrank, xSize, mpi_ysize, endval_Y - startval_Y);
-        fprintf(stdout, "Process %d :endval_Y = %d startval_Y = %d\n", myrank, endval_Y, startval_Y);
+        fprintf(stdout, "Process %d (xsize, mpi_ysize) = (%d,%d)\n", myrank, xSize, mpi_ysize);
+        fprintf(stdout, "Process %d  (start,end) = (%d,%d)\n", myrank, startval_Y, endval_Y);
     }
 
     // Allocate memory
@@ -620,15 +621,9 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     if(debug == 1 && myrank == debug_rank){
         printf("********Process %d **********\n",myrank);
     }
-    for(int i = 0; i < 2 * xSize + 3; i++){
-        int j;
-        if(myrank == 0){
-            j= 0;
-        }
-        else {
-            j = 2*startval_Y + 3;
-        }
 
+    for(int i = 0; i < 2 * xSize + 3; i++){
+        int j = (myrank == 0) ? 0 : 2*startval_Y + 3;
         for(; j < 2 * endval_Y + 3; j++){
             h[i][j] = getGridValueAtDomainCoordinates(map, ((float)(i * xSize)/(xSize + 1)) * (params->deltaX / 2), ((float)(j * ySize)/(ySize + 1)) * (params->deltaY / 2));
         }
@@ -637,15 +632,9 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     if(debug == 1 && myrank == debug_rank){
         printf("*************Process %d *******************\n", myrank);
         printf("h\n");
-        int row;
-        if(myrank == 0)row= 0;
-        else row = 2*startval_Y + 3;
-
-        if(myrank == 0)row= 0;
-        else row = 2*startval_Y + 3;
+        int row = (myrank == 0) ? 0 : 2*startval_Y + 3;
         for(; row < 2 * endval_Y + 3 ; row++){
             for(int col = 0; col <  2 * xSize + 3; col++){
-                // fprintf(stdout, "(col, row): (%d,%d) = %lf", col, row, h[col][row]);
                 fprintf(stdout, "%lf ",h[col][row]);
             }
             fprintf(stdout, "\n");
@@ -653,7 +642,6 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         printf("apres h\n");
     }
 
-    return 0;
 
     for(int i = 0; i < xSize + 1; i++){
         for(int j = 0; j < mpi_ysize + 1; j++)
