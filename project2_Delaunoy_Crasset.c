@@ -388,50 +388,62 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
 
     int startval_X, endval_X;
     int startval_X_h, endval_X_h;
+    int startval_X_u, endval_X_u;
     if(myrank == 0){
         startval_X = 0;
         endval_X = mpi_xsize; 
         startval_X_h = 0;
         endval_X_h = 2*mpi_xsize + 2;
+        startval_X_u = 0;
+        endval_X_u = mpi_xsize;
     }else if(myrank == nbproc -1){
         startval_X = myrank * mpi_xsize + 1;
-        endval_X = (myrank+1) * mpi_xsize + 1; 
+        //endval_X = (myrank+1) * mpi_xsize + 1; 
+        endval_X = (myrank+1) * mpi_xsize;
         startval_X_h = 2 * myrank * mpi_xsize + 3;
         endval_X_h = 2 * (myrank+1) * mpi_xsize + 2;
+        startval_X_u = myrank * mpi_xsize + 1;
+        endval_X_u = (myrank+1) * mpi_xsize;
     }else{
         startval_X = myrank * mpi_xsize + 1;
-        endval_X = (myrank+1) * mpi_xsize + 1; 
+        //endval_X = (myrank+1) * mpi_xsize + 1; 
+        endval_X = (myrank+1) * mpi_xsize; 
         startval_X_h = 2 * myrank * mpi_xsize + 3;
         endval_X_h = 2 * (myrank+1) * mpi_xsize + 3;
+        startval_X_u = myrank * mpi_xsize + 1;
+        endval_X_u = (myrank+1) * mpi_xsize + 1;
     }
 
     if(debug == 1 && myrank == debug_rank){
         fprintf(stdout, "Process %d (mpi_xsize, ySize) = (%d,%d)\n", myrank, mpi_xsize, ySize);
         fprintf(stdout, "Process %d  (start,end) = (%d,%d)\n", myrank, startval_Y, endval_Y);
     }
+    int size_X = endval_X - startval_X;
+    int size_X_u = endval_X_u - startval_X_u;
+    int size_X_h = endval_X_h - startval_X_h;
 
     // Allocate memory
     // eta in {0, 1, ..., a/dx}X{0, 1, ..., b/dy}
-    double** etaCurr = allocateDoubleMatrix(mpi_xsize + 1, ySize + 1);
+    double** etaCurr = allocateDoubleMatrix(size_X, ySize + 1);
     if(!etaCurr){
         return -1;
     }
 
-    double** etaNext = allocateDoubleMatrix(mpi_xsize + 1, ySize + 1);
+    double** etaNext = allocateDoubleMatrix(size_X, ySize + 1);
     if(!etaNext){
         freeDoubleMatrix(etaCurr, mpi_xsize + 1,0);
         return -1;
     }
 
     // u in {-1/2, 1/2, ..., a/dx + 1/2}X{0, 1, ..., b/dy}
-    double** uCurr = allocateDoubleMatrix(mpi_xsize + 2, ySize + 1);
+    double** uCurr = allocateDoubleMatrix(size_X_u, ySize + 1);
     if(!uCurr){
         freeDoubleMatrix(etaCurr, mpi_xsize + 1,0);
         freeDoubleMatrix(etaNext, mpi_xsize + 1,0);
         return -1;
     }
 
-    double** uNext = allocateDoubleMatrix(mpi_xsize + 2, ySize + 1);
+    double** uNext = allocateDoubleMatrix(size_X_u, ySize + 1);
     if(!uNext){
         freeDoubleMatrix(etaCurr, mpi_xsize + 1,0);
         freeDoubleMatrix(etaNext, mpi_xsize + 1,0);
@@ -440,7 +452,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     }
 
     // v in {0, 1, .., a/dx}X{-1/2, 1/2, ..., b/dy + 1/2}
-    double** vCurr = allocateDoubleMatrix(mpi_xsize + 1, ySize + 2);
+    double** vCurr = allocateDoubleMatrix(size_X, ySize + 2);
     if(!vCurr){
         freeDoubleMatrix(etaCurr, mpi_xsize + 1,0);
         freeDoubleMatrix(etaNext, mpi_xsize + 1,0);
@@ -449,7 +461,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         return -1;
     }
 
-    double** vNext = allocateDoubleMatrix(mpi_xsize + 1, ySize + 2);
+    double** vNext = allocateDoubleMatrix(size_X, ySize + 2);
     if(!vNext){
         freeDoubleMatrix(etaCurr, mpi_xsize + 1,0);
         freeDoubleMatrix(etaNext, mpi_xsize + 1,0);
@@ -460,7 +472,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     }
 
     // h in {-1/2, 0, 1/2, ..., a/dx, a/dx + 1/2}X{-1/2, 0, 1/2, ..., b/dy, b/dy + 1/2}
-    double** h = allocateDoubleMatrix(2 * mpi_xsize + 3, 2 * ySize + 3);
+    double** h = allocateDoubleMatrix(size_X_h, 2 * ySize + 3);
     if(!h){
         freeDoubleMatrix(etaCurr, mpi_xsize + 1,0);
         freeDoubleMatrix(etaNext, mpi_xsize + 1,0);
