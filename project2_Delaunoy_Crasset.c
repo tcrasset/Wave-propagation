@@ -486,17 +486,6 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         return -1;
     }
 
-    // // Receive h[2*mpi_xSize + 2] or h[2*(mpi_xSize+1) + 2]
-    // // Optional if h buffers overlap between processes
-    // if(myrank == 0){
-    //     // MPI_SEND();
-    // }else if (myrank = nbproc -1){
-    //     // MPI_RCV();
-    // }else{
-    //     // MPI_SEND_RCV();
-    // }
-
-
     // fprintf(stdout, "%d\n",startval_X_h);
     // fprintf(stdout, "%d\n",endval_X_h);
     for(int i = startval_X_h; i < endval_X_h; i++){
@@ -559,48 +548,53 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             etaNext[xSize][i] = 0;
         */
 
-        // For h, 1 step in theory is 2 step in the matrix (because we go up by 1/2)
-        // Moreover, full index j in theory are 2*j+1 in the matrix
-        // Thus, j - 1/2 in theory is 2*j and
-        // j + 1/2 in theory is 2*j + 2
-        // Except that in theory, the indices start at -1/2
-        // and here they start at 0
-        // Example: [... j - 1/2,   j,  j + 1/2] in theory
-        //          [... 2j,     2j + 1,   2j + 2]
-
-        // For u and v, 1 step in theory is 1 here in the matrix
-        // Except that in theory, the indices start at -1/2
-        // and here they start at 0.
-        // As u is in the x direction, we have indices j that
-        // Example: [... i - 1/2,   /,  i + 1/2] in theory
-        //          [... i,     /,   i + 1]
-
-
         //Receive etaCurr[mpi_xSize] or etaCurr[(myrank+1)*mpi_xsize]
 
-        double* etaReceived = malloc(size_X * sizeof(double));
-        fprintf(stdout, "allocated etaReceived");
+
+
+        fprintf(stdout, "Fails before etaNext\n");
+
+        double* uReceived = malloc(size_X * sizeof(double));
+        fprintf(stdout, "allocated uReceived");
         if(myrank == 0){
-            MPI_Send(etaCurr[size_X], size_X, MPI_DOUBLE, 1, 42, MPI_COMM_WORLD); //Tag 42 is for eta
+            MPI_Send(uCurr[size_X], size_X, MPI_DOUBLE, 1, 62, MPI_COMM_WORLD); //Tag 62 is for u
         }else if (myrank = nbproc -1){
-            MPI_Recv(etaReceived, size_X, MPI_DOUBLE, myrank - 1, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(uReceived, size_X, MPI_DOUBLE, myrank - 1, 62, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }else{
-            MPI_Sendrecv(etaCurr[size_X], size_X, MPI_DOUBLE, myrank + 1, 42,
-                            etaReceived, size_X, MPI_DOUBLE, myrank, 42,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Sendrecv(uCurr[size_X], size_X, MPI_DOUBLE, myrank + 1, 62,
+                            uReceived, size_X, MPI_DOUBLE, myrank, 62, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
 
         fprintf(stdout,"*****************PROCESS %d *****************",myrank);
         for(int j = 0; j < ySize + 1; j++){
-            fprintf(stdout, "%lf ", etaReceived[j]);
+            fprintf(stdout, "%lf ", uReceived[j]);
         }
 
-        fprintf(stdout, "Fails before etaNext\n");
-
-        for(int i = 0; i < size_X +1; i++){
+        // Process etaNext in one block
+        if(myrank == 0){ 
+            for(int i = 0; i < size_X +1; i++){
+                for(int j = 0; j < ySize + 1; j++){
+                    etaNext[i][j] = (-(h[2*i+2][2*j+1] * uCurr[i+1][j] - h[2*i][2*j+1] * uCurr[i][j]) / params->deltaX 
+                                    -(h[2*i+1][2*j+2] * vCurr[i][j+1] - h[2*i+1][2*j] * vCurr[i][j]) / params->deltaY)
+                                    * params->deltaT + etaCurr[i][j];
+                }
+            }
+        }
+        
+        //Process etaNext[0] alone because of uReceived
+        else { 
             for(int j = 0; j < ySize + 1; j++){
-                etaNext[i][j] = (-(h[2*i+2][2*j+1] * uCurr[i+1][j] - h[2*i][2*j+1] * uCurr[i][j]) / params->deltaX 
-                                -(h[2*i+1][2*j+2] * vCurr[i][j+1] - h[2*i+1][2*j] * vCurr[i][j]) / params->deltaY)
-                                * params->deltaT + etaCurr[i][j];
+                etaNext[0][j] = (-(h[2][2*j+1] * uCurr[0][j] - h[0][2*j+1] * uReceived[j]) / params->deltaX 
+                                    -(h[1][2*j+2] * vCurr[0][j+1] - h[1][2*j] * vCurr[0][j]) / params->deltaY)
+                                    * params->deltaT + etaCurr[0][j];
+            }
+
+            for(int i = 1; i < size_X +1; i++){
+                for(int j = 0; j < ySize + 1; j++){
+                    etaNext[i][j] = (-(h[2*i+2][2*j+1] * uCurr[i+1][j] - h[2*i][2*j+1] * uCurr[i][j]) / params->deltaX 
+                                    -(h[2*i+1][2*j+2] * vCurr[i][j+1] - h[2*i+1][2*j] * vCurr[i][j]) / params->deltaY)
+                                    * params->deltaT + etaCurr[i][j];
+                }
             }
         }
 
@@ -618,12 +612,44 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             }
         }
 
+        double* etaReceived = malloc(size_X * sizeof(double));
+        fprintf(stdout, "allocated etaReceived");
+        if(myrank == 0){
+            MPI_Send(etaCurr[size_X], size_X, MPI_DOUBLE, 1, 42, MPI_COMM_WORLD); //Tag 42 is for eta
+        }else if (myrank = nbproc -1){
+            MPI_Recv(etaReceived, size_X, MPI_DOUBLE, myrank - 1, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }else{
+            MPI_Sendrecv(etaCurr[size_X], size_X, MPI_DOUBLE, myrank + 1, 42,
+                            etaReceived, size_X, MPI_DOUBLE, myrank, 42,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
 
+        fprintf(stdout,"*****************PROCESS %d *****************",myrank);
+        for(int j = 0; j < ySize + 1; j++){
+            fprintf(stdout, "%lf ", etaReceived[j]);
+        }
 
-        for(int i = 1; i < size_X+1; i++){ // Shouldn't that be size_X_u ? Or is it because one starts at 1 and not 0
+        // Process uNext in one block
+        if(myrank == nbproc - 1){
+            for(int i = 1; i < size_X+1; i++){ // Shouldn't that be size_X_u ? Or is it because one starts at 1 and not 0
+                for(int j = 0; j < ySize + 1; j++){
+                    uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
+                                -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
+                }
+            }
+        }
+
+        // Process uNext[0] alone because of etaReceived in one block
+        else{
+            
             for(int j = 0; j < ySize + 1; j++){
-                uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
-                               -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
+                uNext[1][j] = (-params->g * (etaCurr[0][j] - etaReceived[j]) / params->deltaX
+                                -params->gamma * uCurr[1][j]) * params->deltaT + uCurr[1][j];
+            }
+            for(int i = 2; i < size_X+1; i++){ // Shouldn't that be size_X_u ? Or is it because one starts at 1 and not 0
+                for(int j = 0; j < ySize + 1; j++){
+                    uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
+                                -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
+                }
             }
         }
 
