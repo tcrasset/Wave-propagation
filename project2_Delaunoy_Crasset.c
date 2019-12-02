@@ -393,22 +393,22 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         startval_X = 0;
         endval_X = mpi_xsize; 
         startval_X_h = 0;
-        endval_X_h = 2*mpi_xsize + 2;
+        endval_X_h = 2*mpi_xsize + 3;
         startval_X_u = 0;
-        endval_X_u = mpi_xsize;
+        endval_X_u = mpi_xsize + 1;
     }else if(myrank == nbproc -1 && nbproc != 2){
         startval_X = myrank * mpi_xsize + 1;
         endval_X = (myrank+1) * mpi_xsize;
-        startval_X_h = 2 * myrank * mpi_xsize + 3;
-        // startval_X_h = 2 * myrank * mpi_xsize + 2; //Include previous line so as to not transfer h
+        // startval_X_h = 2 * myrank * mpi_xsize + 3;
+        startval_X_h = 2 * myrank * mpi_xsize + 2; //Include this line so as to not transfer h
         endval_X_h = 2 * (myrank+1) * mpi_xsize + 2;
         startval_X_u = myrank * mpi_xsize + 1;
         endval_X_u = (myrank+1) * mpi_xsize;
     }else{
         startval_X = myrank * mpi_xsize + 1;
         endval_X = (myrank+1) * mpi_xsize; 
-        startval_X_h = 2 * myrank * mpi_xsize + 3;
-        // startval_X_h = 2 * myrank * mpi_xsize + 2;
+        // startval_X_h = 2 * myrank * mpi_xsize + 3;
+        startval_X_h = 2 * myrank * mpi_xsize + 2;
         endval_X_h = 2 * (myrank+1) * mpi_xsize + 3;
         startval_X_u = myrank * mpi_xsize + 1;
         endval_X_u = (myrank+1) * mpi_xsize + 1;
@@ -824,20 +824,22 @@ int main(int argc, char* argv[]) {
             startval_X = 0;
             endval_X = mpi_xsize; 
             startval_X_h = 0;
-            endval_X_h = 2*mpi_xsize + 2;
+            endval_X_h = 2*mpi_xsize + 3;
             startval_X_u = 0;
-            endval_X_u = mpi_xsize;
-        }else if(myrank == nbproc -1){
+            endval_X_u = mpi_xsize + 1;
+        }else if(myrank == nbproc -1 && nbproc != 2){
             startval_X = myrank * mpi_xsize + 1;
             endval_X = (myrank+1) * mpi_xsize;
-            startval_X_h = 2 * myrank * mpi_xsize + 3;
+            // startval_X_h = 2 * myrank * mpi_xsize + 3;
+            startval_X_h = 2 * myrank * mpi_xsize + 2; //Include this line so as to not transfer h
             endval_X_h = 2 * (myrank+1) * mpi_xsize + 2;
             startval_X_u = myrank * mpi_xsize + 1;
             endval_X_u = (myrank+1) * mpi_xsize;
         }else{
             startval_X = myrank * mpi_xsize + 1;
             endval_X = (myrank+1) * mpi_xsize; 
-            startval_X_h = 2 * myrank * mpi_xsize + 3;
+            // startval_X_h = 2 * myrank * mpi_xsize + 3;
+            startval_X_h = 2 * myrank * mpi_xsize + 2;
             endval_X_h = 2 * (myrank+1) * mpi_xsize + 3;
             startval_X_u = myrank * mpi_xsize + 1;
             endval_X_u = (myrank+1) * mpi_xsize + 1;
