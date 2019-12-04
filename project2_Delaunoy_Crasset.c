@@ -401,6 +401,10 @@ void get_array_sizes(int rank, int nbproc, int xSize, int* size_X, int* size_X_u
         *startval_X_h += rank * 2;
         *endval_X_h += (rank + 1) * 2;
     }
+    else{
+        *startval_X_h += (remaining-1) * 2;
+        *endval_X_h += remaining * 2;
+    }
 
     *size_X = endval_X - startval_X + 1;
     *size_X_u = endval_X_u - startval_X_u + 1;
