@@ -392,6 +392,16 @@ void get_array_sizes(int rank, int nbproc, int xSize, int* size_X, int* size_X_u
         endval_X_u = (rank+1) * mpi_xsize;
     }
 
+    int remaining = xSize%nbproc;
+    if(rank < remaining){
+        startval_X += rank;
+        endval_X += rank + 1;
+        startval_X_u += rank;
+        endval_X_u += rank + 1;
+        *startval_X_h += rank * 2;
+        *endval_X_h += (rank + 1) * 2;
+    }
+
     *size_X = endval_X - startval_X + 1;
     *size_X_u = endval_X_u - startval_X_u + 1;
     *size_X_h = *endval_X_h - *startval_X_h + 1;
@@ -920,6 +930,9 @@ int main(int argc, char* argv[]) {
         int xSize = (int)(map->a / params->deltaX);
         int ySize = (int)(map->b / params->deltaY);
 
+        int size_X, size_X_u, size_X_h, startval_X_h, endval_X_h;
+
+        /*
         int mpi_xsize = xSize/nbproc;
 
         int startval_X, endval_X;
@@ -953,6 +966,9 @@ int main(int argc, char* argv[]) {
         int size_X = endval_X - startval_X + 1;
         int size_X_u = endval_X_u - startval_X_u + 1;
         int size_X_h = endval_X_h - startval_X_h + 1;
+        */
+
+        get_array_sizes(myrank, nbproc, xSize, &size_X, &size_X_u, &size_X_h, &startval_X_h, &endval_X_h);
 
         //MPI
         if(debug == 0){
@@ -1001,7 +1017,7 @@ int main(int argc, char* argv[]) {
         }
 
         for(int i = 0; i < nbproc; i++){
-            get_array_sizes(i, nbproc, xSize, &tmp_size_X, &tmp_size_X_u, &tmp_size_X_h, &startval_X_h, &endval_X_h);
+            get_array_sizes(i, nbproc, xSize, &tmp_size_X, &tmp_size_X_u, &tmp_size_X_h, &tmp_startval_X_h, &tmp_endval_X_h);
             recvcounts_eta[i] = tmp_size_X * (ySize + 1);
             recvcounts_u[i] = tmp_size_X_u * (ySize + 1);
             recvcounts_v[i] = tmp_size_X * (ySize + 2);
