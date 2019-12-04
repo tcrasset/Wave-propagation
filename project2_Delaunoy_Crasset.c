@@ -365,13 +365,13 @@ double* transformMatrixToArray(double** matrix, int x, int y){
 
 int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, double*** v, int debug, int debug_rank){
 
-    // int i = 0;
-    // char hostname[256];
-    // gethostname(hostname, sizeof(hostname));
-    // printf("PID %d on %s ready for attach\n", getpid(), hostname);
-    // fflush(stdout);
-    // while (0 == i)
-    // sleep(5);
+    int i = 0;
+    char hostname[256];
+    gethostname(hostname, sizeof(hostname));
+    printf("PID %d on %s ready for attach\n", getpid(), hostname);
+    fflush(stdout);
+    while (0 == i)
+    sleep(5);
     
     assert(map);
     assert(params);
@@ -527,10 +527,9 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
 
 
     for(unsigned int t = 1; t <= params->TMax; t++){
-        if(debug == 1 && myrank == debug_rank){
-            printf("************* Process %d *******************\n", myrank);
-            printf("t = %u\n", t);
-        }
+        // if(debug == 1 && myrank == debug_rank){
+            printf("\n P%d : t = %u\n", myrank, t);
+        // }
 
         // Compute etaNext
         // Separate for loop for cache optimization
@@ -554,18 +553,18 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
 
         fprintf(stdout, "Fails before etaNext\n");
 
-        double* uReceived = malloc(size_X * sizeof(double));
+        double* uReceived = malloc((ySize + 1) * sizeof(double));
         fprintf(stdout, "allocated uReceived");
         if(myrank == 0){
-            MPI_Send(uCurr[size_X], size_X, MPI_DOUBLE, 1, 62, MPI_COMM_WORLD); //Tag 62 is for u
+            MPI_Send(uCurr[size_X], ySize + 1, MPI_DOUBLE, 1, 62, MPI_COMM_WORLD); //Tag 62 is for u
         }else if (myrank = nbproc -1){
-            MPI_Recv(uReceived, size_X, MPI_DOUBLE, myrank - 1, 62, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(uReceived, ySize + 1, MPI_DOUBLE, myrank - 1, 62, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }else{
-            MPI_Sendrecv(uCurr[size_X], size_X, MPI_DOUBLE, myrank + 1, 62,
-                            uReceived, size_X, MPI_DOUBLE, myrank, 62, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Sendrecv(uCurr[size_X], ySize + 1, MPI_DOUBLE, myrank + 1, 62,
+                            uReceived, ySize + 1, MPI_DOUBLE, myrank, 62, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
 
-        fprintf(stdout,"*****************PROCESS %d *****************",myrank);
+        fprintf(stdout,"\nPROCESS %d \n",myrank);
         for(int j = 0; j < ySize + 1; j++){
             fprintf(stdout, "%lf ", uReceived[j]);
         }
@@ -612,18 +611,18 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             }
         }
 
-        double* etaReceived = malloc(size_X * sizeof(double));
+        double* etaReceived = malloc((ySize + 1) * sizeof(double));
         fprintf(stdout, "allocated etaReceived");
         if(myrank == 0){
-            MPI_Send(etaCurr[size_X], size_X, MPI_DOUBLE, 1, 42, MPI_COMM_WORLD); //Tag 42 is for eta
+            MPI_Send(etaCurr[size_X], ySize + 1, MPI_DOUBLE, 1, 42, MPI_COMM_WORLD); //Tag 42 is for eta
         }else if (myrank = nbproc -1){
-            MPI_Recv(etaReceived, size_X, MPI_DOUBLE, myrank - 1, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(etaReceived, ySize + 1, MPI_DOUBLE, myrank - 1, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }else{
-            MPI_Sendrecv(etaCurr[size_X], size_X, MPI_DOUBLE, myrank + 1, 42,
-                            etaReceived, size_X, MPI_DOUBLE, myrank, 42,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Sendrecv(etaCurr[size_X], ySize + 1, MPI_DOUBLE, myrank + 1, 42,
+                            etaReceived, ySize + 1, MPI_DOUBLE, myrank, 42,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
 
-        fprintf(stdout,"*****************PROCESS %d *****************",myrank);
+        fprintf(stdout,"\nPROCESS %d \n",myrank);
         for(int j = 0; j < ySize + 1; j++){
             fprintf(stdout, "%lf ", etaReceived[j]);
         }
