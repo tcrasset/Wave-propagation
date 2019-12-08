@@ -245,9 +245,8 @@ void freeDoubleMatrix(double** matrix, int x, int debug){
                 int endval_Y = (10 * (myrank+1)) / (nbproc);
 
                 int start = (myrank == 0) ? 0 : 2*startval_Y + 3;
-
+                
                 for(int j = start; j < 2 * endval_Y +3 ; j++){
-                    // printf("P%d (%d,%d) = %lf\n",myrank, i,j,*(matrix[i] + j));
                     fprintf(stderr, "P%d (%d,%d) = %lf\n",myrank, i,j,*(matrix[i] + j));
                 }
             }
@@ -413,14 +412,6 @@ void get_array_sizes(int rank, int nbproc, int xSize, int* size_X, int* size_X_u
 
 int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, double*** v, int debug, int debug_rank){
 
-    // int i = 0;
-    // char hostname[256];
-    // gethostname(hostname, sizeof(hostname));
-    // printf("PID %d on %s ready for attach\n", getpid(), hostname);
-    // fflush(stderr);
-    // while (0 == i)
-    // sleep(5);
-    
     assert(map);
     assert(params);
 
@@ -432,46 +423,6 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     int xSize = (int)(map->a / params->deltaX);
     int ySize = (int)(map->b / params->deltaY);
 
-    /*
-    int mpi_xsize = xSize/nbproc;
-
-    int startval_X, endval_X;
-    int startval_X_h, endval_X_h;
-    int startval_X_u, endval_X_u;
-    if(myrank == 0){
-        startval_X = 0;
-        endval_X = mpi_xsize;
-        startval_X_h = 0;
-        endval_X_h = 2*mpi_xsize + 2;
-        startval_X_u = 0;
-        endval_X_u = mpi_xsize;
-    }else if(myrank == nbproc -1){
-        startval_X = myrank * mpi_xsize + 1;
-        endval_X = (myrank+1) * mpi_xsize;
-        // startval_X_h = 2 * myrank * mpi_xsize + 3;
-        startval_X_h = 2 * myrank * mpi_xsize + 2; //Include this line so as to not transfer h
-        endval_X_h = 2 * (myrank+1) * mpi_xsize + 2;
-        startval_X_u = myrank * mpi_xsize + 1;
-        endval_X_u = (myrank+1) * mpi_xsize + 1;
-    }else{
-        startval_X = myrank * mpi_xsize + 1;
-        endval_X = (myrank+1) * mpi_xsize; 
-        // startval_X_h = 2 * myrank * mpi_xsize + 3;
-        startval_X_h = 2 * myrank * mpi_xsize + 2;
-        endval_X_h = 2 * (myrank+1) * mpi_xsize + 2;
-        startval_X_u = myrank * mpi_xsize + 1;
-        endval_X_u = (myrank+1) * mpi_xsize;
-    }
-
-    if(debug == 1 && myrank == debug_rank){
-        fprintf(stderr, "Process %d (mpi_xsize, ySize) = (%d,%d)\n", myrank, mpi_xsize, ySize);
-        fprintf(stderr, "Process %d  (start,end) = (%d,%d)\n", myrank, startval_X, endval_X);
-    }
-
-    int size_X = endval_X - startval_X + 1;
-    int size_X_u = endval_X_u - startval_X_u + 1;
-    int size_X_h = endval_X_h - startval_X_h + 1;
-    */
 
     int size_X;
     int size_X_u;
@@ -480,13 +431,15 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     int endval_X_h;
     get_array_sizes(myrank, nbproc, xSize, &size_X, &size_X_u, &size_X_h, &startval_X_h, &endval_X_h);
 
-    if(debug == 0){
+    if(debug == 1){
         fprintf(stderr, "process %d size_X = %d\n", myrank, size_X);
         fprintf(stderr, "process %d size_X_u = %d\n", myrank, size_X_u);
         fprintf(stderr, "process %d size_X_h = %d\n", myrank, size_X_h);
     }
 
-    fprintf(stderr,"Processs %d \n xSize %d \n Size X u %d\n Size X_h %d\n Size_X %d \n", myrank, xSize, size_X_u, size_X_h, size_X);
+    if(debug == 1){
+        fprintf(stderr,"Processs %d \n xSize %d \n Size X u %d\n Size X_h %d\n Size_X %d \n", myrank, xSize, size_X_u, size_X_h, size_X);
+    }
 
     // Allocate memory
     // eta in {0, 1, ..., a/dx}X{0, 1, ..., b/dy}
@@ -536,10 +489,15 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         freeDoubleMatrix(vCurr, size_X,0);
         return -1;
     }
-    fprintf(stderr, "Process %d before vnext\n", myrank);
-    vNext[0][0] = 0;
-    fprintf(stderr, "Process %d after vnext\n", myrank);
 
+    if(debug == 1){
+        fprintf(stderr, "Process %d before vnext\n", myrank);
+    }
+    vNext[0][0] = 0;
+    
+    if(debug == 1){
+        fprintf(stderr, "Process %d after vnext\n", myrank);
+    }
     // h in {-1/2, 0, 1/2, ..., a/dx, a/dx + 1/2}X{-1/2, 0, 1/2, ..., b/dy, b/dy + 1/2}
     double** h = allocateDoubleMatrix(size_X_h, 2 * ySize + 3);
     if(!h){
@@ -552,14 +510,15 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         return -1;
     }
 
-    // fprintf(stderr, "%d\n",startval_X_h);
-    // fprintf(stderr, "%d\n",endval_X_h);
     for(int i = startval_X_h; i <= endval_X_h; i++){
         for(int j = 0; j < 2 * ySize + 3; j++){
             h[i-startval_X_h][j] = getGridValueAtDomainCoordinates(map, ((float)(i * xSize)/(xSize + 1)) * (params->deltaX / 2), ((float)(j * ySize)/(ySize + 1)) * (params->deltaY / 2));
         }
     }
-    fprintf(stderr, "Process %d Does not fail at h fill\n", myrank);
+
+    if(debug == 1){
+        fprintf(stderr, "Process %d Does not fail at h fill\n", myrank);
+    }
 
     // if(debug == 1 && myrank == debug_rank){
     //     printf("*************Process %d *******************\n", myrank);
@@ -592,53 +551,25 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     }
 
     for(unsigned int t = 1; t <= params->TMax; t++){
-        fprintf(stderr, "Process%d begin loop %d/%d\n", myrank, t, params->TMax);
+
+        if(debug == 1){
+            fprintf(stderr, "Process%d begin loop %d/%d\n", myrank, t, params->TMax);
+        }
+
         if(debug == 1 && myrank == debug_rank){
             printf("************* Process %d *******************\n", myrank);
             printf("t = %u\n", t);
         }
 
-        // Compute etaNext
-        // Separate for loop for cache optimization
-        /*
-        for(int i = 0; i < xSize + 1; i++)
-            etaNext[i][0] = 0;
-
-        for(int i = 0; i < xSize + 1; i++)
-            etaNext[i][ySize] = 0;
-
-        for(int i = 0; i < ySize + 1; i++)
-            etaNext[0][i] = 0;
-
-        for(int i = 0; i < ySize + 1; i++)
-            etaNext[xSize][i] = 0;
-        */
-
-        //Receive etaCurr[mpi_xSize] or etaCurr[(myrank+1)*mpi_xsize]
-
-
-
-        fprintf(stderr, "Process %d Fails before etaNext\n", myrank);
-        /*
+        if(debug == 1){
+            fprintf(stderr, "Process %d Fails before etaNext\n", myrank);
+        }
         double* uReceived = malloc((ySize + 1) * sizeof(double));
-        fprintf(stderr, "allocated uReceived");
-        if(myrank == 0){
-            MPI_Send(uCurr[size_X-1], ySize + 1, MPI_DOUBLE, 1, 62, MPI_COMM_WORLD); //Tag 62 is for u
-        }else if (myrank = nbproc -1){
-            MPI_Recv(uReceived, ySize + 1, MPI_DOUBLE, myrank - 1, 62, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        }else{
-            MPI_Sendrecv(uCurr[size_X-1], ySize + 1, MPI_DOUBLE, myrank + 1, 62,
-                            uReceived, ySize + 1, MPI_DOUBLE, myrank, 62, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        if(debug == 1){
+            fprintf(stderr, "Process %d allocated uReceived\n", myrank);
         }
 
-        fprintf(stderr,"*****************PROCESS %d *****************",myrank);
-        for(int j = 0; j < ySize + 1; j++){
-            fprintf(stderr, "%lf ", uReceived[j]);
-        }
-        */
-
-        double* uReceived = malloc((ySize + 1) * sizeof(double));
-        fprintf(stderr, "Process %d allocated uReceived\n", myrank);
         if(myrank == nbproc-1){
             MPI_Send(uCurr[0], ySize + 1, MPI_DOUBLE, myrank - 1, 42, MPI_COMM_WORLD); //Tag 42 is for eta
         }else if (myrank == 0){
@@ -672,31 +603,10 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
                                 * params->deltaT + etaCurr[size_X-1][j];
             }
         }
-        /*
-        if(myrank == 0){ 
-            
+
+        if(debug == 1){
+            fprintf(stderr, "Process %d Does not fail at etaNext\n", myrank);
         }
-        
-        //Process etaNext[0] alone because of uReceived
-        else { 
-            for(int j = 0; j < ySize + 1; j++){
-                etaNext[0][j] = (-(h[2][2*j+1] * uCurr[0][j] - h[0][2*j+1] * uReceived[j]) / params->deltaX 
-                                    -(h[1][2*j+2] * vCurr[0][j+1] - h[1][2*j] * vCurr[0][j]) / params->deltaY)
-                                    * params->deltaT + etaCurr[0][j];
-            }
-
-            for(int i = 1; i < size_X +1; i++){
-                for(int j = 0; j < ySize + 1; j++){
-                    etaNext[i][j] = (-(h[2*i+2][2*j+1] * uCurr[i+1][j] - h[2*i][2*j+1] * uCurr[i][j]) / params->deltaX 
-                                    -(h[2*i+1][2*j+2] * vCurr[i][j+1] - h[2*i+1][2*j] * vCurr[i][j]) / params->deltaY)
-                                    * params->deltaT + etaCurr[i][j];
-                }
-            }
-        }
-        */
-
-        fprintf(stderr, "Process %d Does not fail at etaNext\n", myrank);
-
         // Compute uNext
         if(myrank == 0){
             for(int i = 0; i < ySize + 1; i++){
@@ -710,7 +620,11 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         }
 
         double* etaReceived = malloc((ySize + 1) * sizeof(double));
-        fprintf(stderr, "Process %d allocated etaReceived\n", myrank);
+
+        if(debug == 1){
+            fprintf(stderr, "Process %d allocated etaReceived\n", myrank);
+        }
+
         if(myrank == 0){
             MPI_Send(etaCurr[size_X-1], ySize + 1, MPI_DOUBLE, 1, 42, MPI_COMM_WORLD); //Tag 42 is for eta
         }else if (myrank == nbproc -1){
@@ -720,19 +634,24 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
                          etaReceived, ySize + 1, MPI_DOUBLE, myrank - 1, 42,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
 
-        fprintf(stderr,"*****************PROCESS %d *****************\n",myrank);
-        /*
-        for(int j = 0; j < ySize + 1; j++){
-            fprintf(stderr, "%lf ", etaReceived[j]);
+        if(debug == 1){
+
+            fprintf(stderr,"*****************PROCESS %d *****************\n",myrank);
+            /*
+            for(int j = 0; j < ySize + 1; j++){
+                fprintf(stderr, "%lf ", etaReceived[j]);
+            }
+            */
+            fprintf(stderr, "\n");
         }
-        */
-        fprintf(stderr, "\n");
 
-
-        fprintf(stderr, "Process %d start unext\n", myrank);
+        if(debug == 1){
+            fprintf(stderr, "Process %d start unext\n", myrank);
+        }
+        
         // Process uNext in one block
         if(myrank == 0){
-            for(int i = 1; i < size_X_u; i++){ // Shouldn't that be size_X_u ? Or is it because one starts at 1 and not 0
+            for(int i = 1; i < size_X_u; i++){
                 for(int j = 0; j < ySize + 1; j++){
                     uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
                                 -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
@@ -744,7 +663,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
                 uNext[0][j] = (-params->g * (etaCurr[0][j] - etaReceived[j]) / params->deltaX
                                -params->gamma * uCurr[0][j]) * params->deltaT + uCurr[0][j];
             }
-            for(int i = 1; i < size_X_u-1; i++){ // Shouldn't that be size_X_u ? Or is it because one starts at 1 and not 0
+            for(int i = 1; i < size_X_u-1; i++){ 
                 for(int j = 0; j < ySize + 1; j++){
                     uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
                                 -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
@@ -766,14 +685,16 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
                 }
             }
         }
-
-        fprintf(stderr, "Process %d end unext\n", myrank);
-        fprintf(stderr, "Process %d start vnext\n", myrank);
+        if(debug == 1){
+            fprintf(stderr, "Process %d end unext\n", myrank);
+            fprintf(stderr, "Process %d start vnext\n", myrank);
+        }
 
         for(int i = 0; i < size_X; i++)
             vNext[i][0] = 0;
 
-        fprintf(stderr, "Process %d after first v loop\n", myrank);
+        if(debug == 1)
+            fprintf(stderr, "Process %d after first v loop\n", myrank);
 
         for(int i = 0; i < size_X; i++){
             if(params->s == 0)
@@ -781,8 +702,8 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             else
                 vNext[i][ySize+1] = params->A * sin(2 * M_PI * params->f * t * params->deltaT) * exp(- t * params->deltaT / 500);
         }
-        
-        fprintf(stderr, "Process %d before v loop \n", myrank);
+        if(debug == 1)
+            fprintf(stderr, "Process %d before v loop \n", myrank);
         for(int i = 0; i < size_X; i++){
             for(int j = 1; j < ySize + 1; j++){
                 vNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i][j-1]) / params->deltaY
@@ -790,7 +711,9 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             }
         }
 
-        fprintf(stderr, "Process %d end vnext\n", myrank);
+        if(debug == 1)
+            fprintf(stderr, "Process %d end vnext\n", myrank);
+        
 
         if(debug == 1 && myrank == debug_rank){
             printf("\n\n\n*************Process %d *******************\n\n\n\n", myrank);
@@ -823,8 +746,10 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         vCurr = vNext;
         vNext = tmp;
 
-        fprintf(stderr, "Process%d end loop %d/%d\n", myrank, t, params->TMax);
-    }
+        if(debug == 1){
+            fprintf(stderr, "Process%d end loop %d/%d\n", myrank, t, params->TMax);
+        }
+    }   
 
     *eta = etaCurr;
     *u = uCurr;
@@ -833,36 +758,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     freeDoubleMatrix(etaNext, size_X,0);
     freeDoubleMatrix(uNext, size_X_u,0);
     freeDoubleMatrix(vNext, size_X,0);
-    // freeDoubleMatrix(h, size_X_h,1);
-
-    if(myrank == 1) {
-
-        // printf("*************Process %d *******************\n", myrank);
-        // printf("h\n");
-        // int row = (myrank == 0) ? 0 : 2*startval_Y + 3;
-        // for(; row < 2 * endval_Y + 3 ; row++){
-        //     for(int col = 0; col <  2 * xSize + 3; col++){
-        //         fprintf(stderr, "%lf ",h[col][row]);
-        //     }
-        //     fprintf(stderr, "\n");
-        // }
-        // printf("apres h\n");
-
-        // free(h[0]);
-        // free(h[1]);
-        // free(h[2]);
-        // free(h[3]);
-        // free(h[4]);
-        // free(h[5]);
-        // free(h[6]);
-        // free(h[7]);
-        // free(h[8]);
-        // free(h[9]);
-        // free(h[10]);
-        // free(h[11]);
-        // free(h[12]);
-        // free(h[13]);
-    }
+    freeDoubleMatrix(h, size_X_h,0);
 
     return 0;
 }
@@ -936,46 +832,10 @@ int main(int argc, char* argv[]) {
 
         int size_X, size_X_u, size_X_h, startval_X_h, endval_X_h;
 
-        /*
-        int mpi_xsize = xSize/nbproc;
-
-        int startval_X, endval_X;
-        int startval_X_h, endval_X_h;
-        int startval_X_u, endval_X_u;
-        if(myrank == 0){
-            startval_X = 0;
-            endval_X = mpi_xsize;
-            startval_X_h = 0;
-            endval_X_h = 2*mpi_xsize + 2;
-            startval_X_u = 0;
-            endval_X_u = mpi_xsize;
-        }else if(myrank == nbproc -1){
-            startval_X = myrank * mpi_xsize + 1;
-            endval_X = (myrank+1) * mpi_xsize;
-            // startval_X_h = 2 * myrank * mpi_xsize + 3;
-            startval_X_h = 2 * myrank * mpi_xsize + 2; //Include this line so as to not transfer h
-            endval_X_h = 2 * (myrank+1) * mpi_xsize + 2;
-            startval_X_u = myrank * mpi_xsize + 1;
-            endval_X_u = (myrank+1) * mpi_xsize + 1;
-        }else{
-            startval_X = myrank * mpi_xsize + 1;
-            endval_X = (myrank+1) * mpi_xsize; 
-            // startval_X_h = 2 * myrank * mpi_xsize + 3;
-            startval_X_h = 2 * myrank * mpi_xsize + 2;
-            endval_X_h = 2 * (myrank+1) * mpi_xsize + 2;
-            startval_X_u = myrank * mpi_xsize + 1;
-            endval_X_u = (myrank+1) * mpi_xsize;
-        }
-
-        int size_X = endval_X - startval_X + 1;
-        int size_X_u = endval_X_u - startval_X_u + 1;
-        int size_X_h = endval_X_h - startval_X_h + 1;
-        */
-
         get_array_sizes(myrank, nbproc, xSize, &size_X, &size_X_u, &size_X_h, &startval_X_h, &endval_X_h);
 
         //MPI
-        if(debug == 0){
+        if(debug == 1){
             fprintf(stderr,"***********ETA**************\n");
             printDoubleMatrix(eta, size_X, ySize + 1,myrank);
             fprintf(stderr,"***********U**************\n");
@@ -988,21 +848,23 @@ int main(int argc, char* argv[]) {
         double* uPartial = transformMatrixToArray(u, size_X_u, ySize +1);
         double* vPartial = transformMatrixToArray(v, size_X, ySize +2);
 
-        fprintf(stderr, "process %d size_X = %d\n", myrank, size_X);
-        fprintf(stderr, "process %d size_X_u = %d\n", myrank, size_X_u);
-        fprintf(stderr, "process %d xSize = %d\n", myrank, xSize);
-        fprintf(stderr, "process %d ySize = %d\n", myrank, ySize);
+        if(debug == 1){
 
-        fprintf(stderr, "process %d begin test etaPartial\n", myrank);
-        fprintf(stderr, "process %d etaPartial = %lf\n", myrank, etaPartial[size_X * (ySize + 1) - 1]);
-        fprintf(stderr, "process %d end test etaPartial\n", myrank);
-        fprintf(stderr, "process %d begin test uPartial\n", myrank);
-        fprintf(stderr, "process %d uPartial = %lf\n", myrank, uPartial[size_X_u * (ySize + 1) - 1]);
-        fprintf(stderr, "process %d end test uPartial\n", myrank);
-        fprintf(stderr, "process %d begin test vPartial\n", myrank);
-        fprintf(stderr, "process %d vPartial = %lf\n", myrank, vPartial[size_X * (ySize + 2) - 1]);
-        fprintf(stderr, "process %d end test vPartial\n", myrank);
+            fprintf(stderr, "process %d size_X = %d\n", myrank, size_X);
+            fprintf(stderr, "process %d size_X_u = %d\n", myrank, size_X_u);
+            fprintf(stderr, "process %d xSize = %d\n", myrank, xSize);
+            fprintf(stderr, "process %d ySize = %d\n", myrank, ySize);
 
+            fprintf(stderr, "process %d begin test etaPartial\n", myrank);
+            fprintf(stderr, "process %d etaPartial = %lf\n", myrank, etaPartial[size_X * (ySize + 1) - 1]);
+            fprintf(stderr, "process %d end test etaPartial\n", myrank);
+            fprintf(stderr, "process %d begin test uPartial\n", myrank);
+            fprintf(stderr, "process %d uPartial = %lf\n", myrank, uPartial[size_X_u * (ySize + 1) - 1]);
+            fprintf(stderr, "process %d end test uPartial\n", myrank);
+            fprintf(stderr, "process %d begin test vPartial\n", myrank);
+            fprintf(stderr, "process %d vPartial = %lf\n", myrank, vPartial[size_X * (ySize + 2) - 1]);
+            fprintf(stderr, "process %d end test vPartial\n", myrank);
+        }
         int tmp_size_X;
         int tmp_size_X_u;
         int tmp_size_X_h;
@@ -1015,6 +877,7 @@ int main(int argc, char* argv[]) {
         int* disp_eta = malloc(nbproc * sizeof(int));
         int* disp_u = malloc(nbproc * sizeof(int));
         int* disp_v = malloc(nbproc * sizeof(int));
+
         if(!recvcounts_eta || !recvcounts_u || !recvcounts_v || !disp_eta || !disp_u || !disp_v){
             fprintf(stderr, "error malloc recvcounts\n");
             exit(-1);
@@ -1052,7 +915,7 @@ int main(int argc, char* argv[]) {
         free(disp_u);
         free(disp_v);
 
-        if(myrank == 0){
+        if(debug == 1 && myrank == 0){
             fprintf(stderr,"***********ETA TOTAL**************\n");
             printLinearArray(etaTotal, size_X, ySize +1);
             fprintf(stderr,"***********U TOTAL**************\n");
@@ -1060,17 +923,20 @@ int main(int argc, char* argv[]) {
             fprintf(stderr,"***********V TOTAL**************\n");
             printLinearArray(vTotal, size_X_u, ySize +2);
         }
+
         free(etaTotal);
         free(uTotal);
         free(vTotal);
 
         // writeResultMatrix("eta_test.dat", xSize+1, ySize+1, eta, debug);
 
-        fprintf(stderr, "process %d before free matrix\n", myrank);
-        freeDoubleMatrix(eta, size_X, 0);
-        freeDoubleMatrix(u, size_X_u, 0);
-        freeDoubleMatrix(v, size_X, 0);
-        fprintf(stderr, "process %d after free matrix\n", myrank);
+        if(debug == 1){
+            fprintf(stderr, "process %d before free matrix\n", myrank);
+            freeDoubleMatrix(eta, size_X, 0);
+            freeDoubleMatrix(u, size_X_u, 0);
+            freeDoubleMatrix(v, size_X, 0);
+            fprintf(stderr, "process %d after free matrix\n", myrank);
+        }
 
     }
     // Implicit
@@ -1081,11 +947,14 @@ int main(int argc, char* argv[]) {
 
     MPI_Finalize();
 
-    fprintf(stderr, "before free params\n");
+    if(debug == 1){
+        fprintf(stderr, "before free params\n");
+    }
     free(params);
     freeDoubleMatrix(map->grid, map->X,0);
     free(map);
-    fprintf(stderr, "after free params\n");
-    /* code */
+    if(debug == 1){
+        fprintf(stderr, "after free params\n");
+    }    
     return 0;
 }
