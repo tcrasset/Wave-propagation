@@ -786,6 +786,10 @@ int main(int argc, char* argv[]) {
     assert((scheme == 0) || (scheme == 1));
 
     MPI_Init(&argc,&argv);
+    
+    // Measure execution time
+    double startTime = MPI_Wtime();
+
     int nbproc, myrank;
     MPI_Comm_size(MPI_COMM_WORLD, &nbproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -804,28 +808,16 @@ int main(int argc, char* argv[]) {
         double** u;
         double** v;
 
-        // if(eulerExplicit(map, params, &eta, &u, &v, debug) == -1){
-        //     fprintf(stderr, "error in euler function\n");
-        //     free(params);
-        //     free(map->grid);
-        //     free(map);
-        //     //exit(EXIT_FAILURE)
-        // }
-
 
         if(eulerExplicitMPI(map, params, &eta, &u, &v, debug, debug_rank) == -1){
+
             fprintf(stderr, "error in euler function\n");
             free(params);
             free(map->grid);
             free(map);
+
             //exit(EXIT_FAILURE)
         }
-        
-
-        int nbproc, myrank ;
-
-        MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-        MPI_Comm_size(MPI_COMM_WORLD, &nbproc);
 
         int xSize = (int)(map->a / params->deltaX);
         int ySize = (int)(map->b / params->deltaY);
@@ -945,7 +937,6 @@ int main(int argc, char* argv[]) {
         printf("%s %s %u", parameter_file, map_file, scheme);
     }
 
-    MPI_Finalize();
 
     if(debug == 1){
         fprintf(stderr, "before free params\n");
@@ -956,5 +947,18 @@ int main(int argc, char* argv[]) {
     if(debug == 1){
         fprintf(stderr, "after free params\n");
     }    
+
+    // Mesure execution time
+    double endTime = MPI_Wtime();
+    double executionTime = endTime - startTime;
+    char* openMP_nbthreads = getenv("OMP_NUM_THREADS");
+
+    // For file output
+    fprintf(stdout,"%d,%d,%d,%s,%lf,%lf,%lf,%lf,%u,%lf\n", scheme, myrank, nbproc, \
+                openMP_nbthreads, executionTime, params->deltaX, params->deltaY, \
+                params->deltaT, params->s, params->r_threshold);
+    MPI_Finalize();
+    
     return 0;
+
 }

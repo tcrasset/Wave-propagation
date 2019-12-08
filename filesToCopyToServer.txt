@@ -2,4 +2,7 @@ project2019_2.pdf
 project2_Delaunoy_Crasset.c
 project2_Delaunoy_Crasset.h
 test_map.dat
-test_param.txt
+Parameters/test_param.txt
+multiprocess_computation.sh
+project2_launch.sh
+namesOfParameterFiles.txt
