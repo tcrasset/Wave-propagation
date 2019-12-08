@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -8,6 +9,7 @@
 #include "project2_Delaunoy_Crasset.h"
 
 #define M_PI 3.14159265358979323846
+#define MAX_FILE_SIZE 500
 
 void writeTestMap(char* filename, int debug){
 
@@ -67,6 +69,34 @@ void writeResultMatrix(char* filename, int xsize, int ysize,
                 printf("%lf \n", matrix[col][row]);
             }
             fwrite(&matrix[col][row], 8,1,fp);
+        }
+    }
+
+    fclose(fp);
+}
+
+
+void writeResultArray(char* filename, int xsize, int ysize,
+                         double* array, int debug){
+    
+    FILE* fp;
+
+    fp = fopen(filename, "wb");
+    if (fp == NULL) {
+        fprintf(stderr, "Unable to open file %s\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    fwrite(&xsize, sizeof(xsize),1,fp);
+    fwrite(&ysize, sizeof(ysize),1,fp);
+
+    for(int row = ysize -1; row >= 0; row--){
+        for(int col = 0; col < xsize;col++){
+            int index = row * ysize + col;
+            if(debug == 1){
+                printf("%lf \n", array[index]);
+            }
+            fwrite(&array[index], 8,1,fp);
         }
     }
 
@@ -410,6 +440,132 @@ void get_array_sizes(int rank, int nbproc, int xSize, int* size_X, int* size_X_u
     *size_X_h = *endval_X_h - *startval_X_h + 1;
 }
 
+
+void getFileNames(char* etaName, char* uName, char* vName, unsigned int filename_size, char* file_suffix){
+    char *etaPrefix = "eta_";
+    char *uPrefix = "u_";
+    char *vPrefix = "v_";
+
+    strncpy(etaName, etaPrefix,filename_size);
+    strncat(etaName, file_suffix,filename_size);
+    strncat(etaName, ".dat",filename_size);
+
+    strncpy(uName, uPrefix,filename_size);
+    strncat(uName, file_suffix,filename_size);
+    strncat(uName, ".dat",filename_size);
+
+    strncpy(vName, vPrefix,filename_size);
+    strncat(vName, file_suffix,filename_size);
+    strncat(vName, ".dat",filename_size);
+}
+
+
+int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize,  int debug, char* file_suffix){
+
+    int nbproc, myrank;
+    MPI_Comm_size(MPI_COMM_WORLD, &nbproc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    int size_X, size_X_u, size_X_h, startval_X_h, endval_X_h;
+    get_array_sizes(myrank, nbproc, xSize, &size_X, &size_X_u, &size_X_h, &startval_X_h, &endval_X_h);
+
+
+    double* etaPartial = transformMatrixToArray(eta, size_X, ySize +1);
+    double* uPartial = transformMatrixToArray(u, size_X_u, ySize +1);
+    double* vPartial = transformMatrixToArray(v, size_X, ySize +2);
+
+    if(debug == 1){
+
+        fprintf(stderr, "process %d size_X = %d\n", myrank, size_X);
+        fprintf(stderr, "process %d size_X_u = %d\n", myrank, size_X_u);
+        fprintf(stderr, "process %d xSize = %d\n", myrank, xSize);
+        fprintf(stderr, "process %d ySize = %d\n", myrank, ySize);
+
+        fprintf(stderr, "process %d begin test etaPartial\n", myrank);
+        fprintf(stderr, "process %d etaPartial = %lf\n", myrank, etaPartial[size_X * (ySize + 1) - 1]);
+        fprintf(stderr, "process %d end test etaPartial\n", myrank);
+        fprintf(stderr, "process %d begin test uPartial\n", myrank);
+        fprintf(stderr, "process %d uPartial = %lf\n", myrank, uPartial[size_X_u * (ySize + 1) - 1]);
+        fprintf(stderr, "process %d end test uPartial\n", myrank);
+        fprintf(stderr, "process %d begin test vPartial\n", myrank);
+        fprintf(stderr, "process %d vPartial = %lf\n", myrank, vPartial[size_X * (ySize + 2) - 1]);
+        fprintf(stderr, "process %d end test vPartial\n", myrank);
+    }
+    int tmp_size_X;
+    int tmp_size_X_u;
+    int tmp_size_X_h;
+    int tmp_startval_X_h;
+    int tmp_endval_X_h;
+
+    int* recvcounts_eta = malloc(nbproc * sizeof(int));
+    int* recvcounts_u = malloc(nbproc * sizeof(int));
+    int* recvcounts_v = malloc(nbproc * sizeof(int));
+    int* disp_eta = malloc(nbproc * sizeof(int));
+    int* disp_u = malloc(nbproc * sizeof(int));
+    int* disp_v = malloc(nbproc * sizeof(int));
+
+    if(!recvcounts_eta || !recvcounts_u || !recvcounts_v || !disp_eta || !disp_u || !disp_v){
+        fprintf(stderr, "error malloc recvcounts\n");
+        exit(-1);
+    }
+
+    for(int i = 0; i < nbproc; i++){
+        get_array_sizes(i, nbproc, xSize, &tmp_size_X, &tmp_size_X_u, &tmp_size_X_h, &tmp_startval_X_h, &tmp_endval_X_h);
+        recvcounts_eta[i] = tmp_size_X * (ySize + 1);
+        recvcounts_u[i] = tmp_size_X_u * (ySize + 1);
+        recvcounts_v[i] = tmp_size_X * (ySize + 2);
+
+        if(i == 0){
+            disp_eta[i] = 0;
+            disp_u[i] = 0;
+            disp_v[i] = 0;
+        }
+        else{
+            disp_eta[i] = disp_eta[i-1] + tmp_size_X * (ySize + 1);
+            disp_u[i] = disp_u[i-1] + tmp_size_X_u * (ySize + 1);
+            disp_v[i] = disp_v[i-1] + tmp_size_X * (ySize + 2);
+        }
+    }
+
+    double * etaTotal = malloc((xSize + 1) * (ySize  + 1)* sizeof(double));
+    double * uTotal = malloc((xSize + 2) * (ySize  + 1)* sizeof(double));
+    double * vTotal = malloc((xSize + 1) * (ySize  + 2)* sizeof(double)); // had to increase xsize by 1 to not get segfault
+    MPI_Gatherv(etaPartial, (size_X) * (ySize + 1) , MPI_DOUBLE, etaTotal, recvcounts_eta, disp_eta, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(uPartial, (size_X_u) * (ySize + 1) , MPI_DOUBLE, uTotal, recvcounts_u, disp_u, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(vPartial, (size_X) * (ySize + 2) , MPI_DOUBLE, vTotal, recvcounts_v, disp_v, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    free(recvcounts_eta);
+    free(recvcounts_u);
+    free(recvcounts_v);
+    free(disp_eta);
+    free(disp_u);
+    free(disp_v);
+
+    if(debug == 1 && myrank == 0){
+        fprintf(stderr,"***********ETA TOTAL**************\n");
+        printLinearArray(etaTotal, size_X, ySize +1);
+        fprintf(stderr,"***********U TOTAL**************\n");
+        printLinearArray(uTotal, size_X_u, ySize +1);
+        fprintf(stderr,"***********V TOTAL**************\n");
+        printLinearArray(vTotal, size_X_u, ySize +2);
+    }
+
+
+    char etaFilename[MAX_FILE_SIZE];
+    char uFilename[MAX_FILE_SIZE];
+    char vFilename[MAX_FILE_SIZE];
+
+    getFileNames(etaFilename, uFilename, vFilename, MAX_FILE_SIZE, file_suffix);
+
+    writeResultArray(etaFilename, size_X, ySize+1, etaTotal, 0);
+    writeResultArray(uFilename, size_X_u, ySize+2, uTotal, 0);
+    writeResultArray(vFilename, size_X_u, ySize+1, vTotal, 0);
+
+    free(etaTotal);
+    free(uTotal);
+    free(vTotal);
+}
+
 int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, double*** v, int debug, int debug_rank){
 
     assert(map);
@@ -550,7 +706,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             vCurr[i][j] = 0;
     }
 
-    for(unsigned int t = 1; t <= params->TMax; t++){
+    for(unsigned int t = 1; t <= params->TMax/params->deltaT; t++){
 
         if(debug == 1){
             fprintf(stderr, "Process%d begin loop %d/%d\n", myrank, t, params->TMax);
@@ -731,6 +887,18 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             printDoubleMatrix(vNext, size_X+1, ySize + 2,myrank);
         }
 
+
+        //Save arrays to disk
+        params->S = 1000;
+        if(params->S != 0 && t % params->S == 0){
+            printf("Save results, %u\n", t);
+            char file_suffix[MAX_FILE_SIZE];
+            snprintf(file_suffix, MAX_FILE_SIZE,"%u___0_%.2lf_%.2lf_%.2lf_%u_%.1lf", \
+                t, params->deltaX, params->deltaY, params->deltaT, params->s, params->r_threshold);
+
+            gather_and_save(etaNext,uNext,vNext, xSize,ySize, debug, file_suffix);
+        }
+
         // Go to next step
         double** tmp;
         
@@ -836,91 +1004,24 @@ int main(int argc, char* argv[]) {
             printDoubleMatrix(v, size_X, ySize + 2,myrank);
         }
 
-        double* etaPartial = transformMatrixToArray(eta, size_X, ySize +1);
-        double* uPartial = transformMatrixToArray(u, size_X_u, ySize +1);
-        double* vPartial = transformMatrixToArray(v, size_X, ySize +2);
+        char file_suffix[MAX_FILE_SIZE];
+        snprintf(file_suffix, MAX_FILE_SIZE,"%f___0_%lf_%lf_%lf_%u_%lf", \
+            params->TMax/params->deltaT, params->deltaX, params->deltaY, \
+            params->deltaT, params->s, params->r_threshold);
 
-        if(debug == 1){
+        if(gather_and_save(eta,u,v, xSize,ySize, debug, file_suffix) == -1){
 
-            fprintf(stderr, "process %d size_X = %d\n", myrank, size_X);
-            fprintf(stderr, "process %d size_X_u = %d\n", myrank, size_X_u);
-            fprintf(stderr, "process %d xSize = %d\n", myrank, xSize);
-            fprintf(stderr, "process %d ySize = %d\n", myrank, ySize);
+            fprintf(stderr, "error in gather_and_save function\n");
+            freeDoubleMatrix(eta, size_X, 0);
+            freeDoubleMatrix(u, size_X_u, 0);
+            freeDoubleMatrix(v, size_X, 0);
+            free(params);
+            free(map->grid);
+            free(map);
 
-            fprintf(stderr, "process %d begin test etaPartial\n", myrank);
-            fprintf(stderr, "process %d etaPartial = %lf\n", myrank, etaPartial[size_X * (ySize + 1) - 1]);
-            fprintf(stderr, "process %d end test etaPartial\n", myrank);
-            fprintf(stderr, "process %d begin test uPartial\n", myrank);
-            fprintf(stderr, "process %d uPartial = %lf\n", myrank, uPartial[size_X_u * (ySize + 1) - 1]);
-            fprintf(stderr, "process %d end test uPartial\n", myrank);
-            fprintf(stderr, "process %d begin test vPartial\n", myrank);
-            fprintf(stderr, "process %d vPartial = %lf\n", myrank, vPartial[size_X * (ySize + 2) - 1]);
-            fprintf(stderr, "process %d end test vPartial\n", myrank);
+            exit(EXIT_FAILURE);
+
         }
-        int tmp_size_X;
-        int tmp_size_X_u;
-        int tmp_size_X_h;
-        int tmp_startval_X_h;
-        int tmp_endval_X_h;
-
-        int* recvcounts_eta = malloc(nbproc * sizeof(int));
-        int* recvcounts_u = malloc(nbproc * sizeof(int));
-        int* recvcounts_v = malloc(nbproc * sizeof(int));
-        int* disp_eta = malloc(nbproc * sizeof(int));
-        int* disp_u = malloc(nbproc * sizeof(int));
-        int* disp_v = malloc(nbproc * sizeof(int));
-
-        if(!recvcounts_eta || !recvcounts_u || !recvcounts_v || !disp_eta || !disp_u || !disp_v){
-            fprintf(stderr, "error malloc recvcounts\n");
-            exit(-1);
-        }
-
-        for(int i = 0; i < nbproc; i++){
-            get_array_sizes(i, nbproc, xSize, &tmp_size_X, &tmp_size_X_u, &tmp_size_X_h, &tmp_startval_X_h, &tmp_endval_X_h);
-            recvcounts_eta[i] = tmp_size_X * (ySize + 1);
-            recvcounts_u[i] = tmp_size_X_u * (ySize + 1);
-            recvcounts_v[i] = tmp_size_X * (ySize + 2);
-
-            if(i == 0){
-                disp_eta[i] = 0;
-                disp_u[i] = 0;
-                disp_v[i] = 0;
-            }
-            else{
-                disp_eta[i] = disp_eta[i-1] + tmp_size_X * (ySize + 1);
-                disp_u[i] = disp_u[i-1] + tmp_size_X_u * (ySize + 1);
-                disp_v[i] = disp_v[i-1] + tmp_size_X * (ySize + 2);
-            }
-        }
-
-        double * etaTotal = malloc((xSize + 1) * (ySize  + 1)* sizeof(double));
-        double * uTotal = malloc((xSize + 2) * (ySize  + 1)* sizeof(double));
-        double * vTotal = malloc((xSize + 1) * (ySize  + 2)* sizeof(double)); // had to increase xsize by 1 to not get segfault
-        MPI_Gatherv(etaPartial, (size_X) * (ySize + 1) , MPI_DOUBLE, etaTotal, recvcounts_eta, disp_eta, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Gatherv(uPartial, (size_X_u) * (ySize + 1) , MPI_DOUBLE, uTotal, recvcounts_u, disp_u, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Gatherv(vPartial, (size_X) * (ySize + 2) , MPI_DOUBLE, vTotal, recvcounts_v, disp_v, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-        free(recvcounts_eta);
-        free(recvcounts_u);
-        free(recvcounts_v);
-        free(disp_eta);
-        free(disp_u);
-        free(disp_v);
-
-        if(debug == 1 && myrank == 0){
-            fprintf(stderr,"***********ETA TOTAL**************\n");
-            printLinearArray(etaTotal, size_X, ySize +1);
-            fprintf(stderr,"***********U TOTAL**************\n");
-            printLinearArray(uTotal, size_X_u, ySize +1);
-            fprintf(stderr,"***********V TOTAL**************\n");
-            printLinearArray(vTotal, size_X_u, ySize +2);
-        }
-
-        free(etaTotal);
-        free(uTotal);
-        free(vTotal);
-
-        // writeResultMatrix("eta_test.dat", xSize+1, ySize+1, eta, debug);
 
         if(debug == 1){
             fprintf(stderr, "process %d before free matrix\n", myrank);
