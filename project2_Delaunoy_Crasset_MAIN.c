@@ -4,104 +4,14 @@
 #include <string.h>
 #include <math.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <mpi.h>
-#include "project2_Delaunoy_Crasset.h"
+
+#include "project2_Delaunoy_Crasset_MAIN.h"
+#include "project2_Delaunoy_Crasset_IO.h"
 
 #define M_PI 3.14159265358979323846
-#define MAX_FILE_SIZE 500
-
-void writeTestMap(char* filename, int debug){
-
-    FILE* fp;
-
-    fp = fopen(filename, "w");
-    if (fp == NULL) {
-        fprintf(stderr, "Unable to open file %s\n", filename);
-        exit(EXIT_FAILURE);
-    }
-
-    double a = 5;
-    double b = 10;
-    int X = 20;
-    int Y = 10;
-
-    assert(a > 0);
-    assert(b > 0);
-    assert(X > 0);
-    assert(Y > 0);
-
-    fwrite(&a, sizeof(a),1,fp);
-    fwrite(&b, sizeof(b),1,fp);
-    fwrite(&X, sizeof(X),1,fp);
-    fwrite(&Y, sizeof(Y),1,fp);
-
-    for (int row = 0; row < Y; row++){   
-        for (int col = 0; col < X; col++){
-            double value =(double) (Y - row - 1)* X + col; 
-            if(debug == 1)
-                printf("%lf \n", value);
-            fwrite(&value, sizeof(value),1,fp); 
-        }
-    }    
-
-    fclose(fp);
-}
-
-
-void writeResultMatrix(char* filename, int xsize, int ysize,
-                         double** matrix, int debug){
-    
-    FILE* fp;
-
-    fp = fopen(filename, "wb");
-    if (fp == NULL) {
-        fprintf(stderr, "Unable to open file %s\n", filename);
-        exit(EXIT_FAILURE);
-    }
-
-    fwrite(&xsize, sizeof(xsize),1,fp);
-    fwrite(&ysize, sizeof(ysize),1,fp);
-
-    for(int row = ysize -1; row >= 0; row--){
-        for(int col = 0; col < xsize;col++){
-            if(debug == 1){
-                printf("%lf \n", matrix[col][row]);
-            }
-            fwrite(&matrix[col][row], 8,1,fp);
-        }
-    }
-
-    fclose(fp);
-}
-
-
-void writeResultArray(char* filename, int xsize, int ysize,
-                         double* array, int debug){
-    
-    FILE* fp;
-
-    fp = fopen(filename, "wb");
-    if (fp == NULL) {
-        fprintf(stderr, "Unable to open file %s\n", filename);
-        exit(EXIT_FAILURE);
-    }
-
-    fwrite(&xsize, sizeof(xsize),1,fp);
-    fwrite(&ysize, sizeof(ysize),1,fp);
-
-    for(int row = ysize -1; row >= 0; row--){
-        for(int col = 0; col < xsize;col++){
-            int index = row * ysize + col;
-            if(debug == 1){
-                printf("%lf \n", array[index]);
-            }
-            fwrite(&array[index], 8,1,fp);
-        }
-    }
-
-    fclose(fp);
-}
 
 SparseMatrix* toSparseMatrix(double** matrix, int xSize, int ySize){
 
@@ -116,47 +26,6 @@ SparseMatrix* toSparseMatrix(double** matrix, int xSize, int ySize){
 
 }
 
-
-Parameters* readParameterFile(const char* filename) {
-    FILE* fp;
-
-    fp = fopen(filename, "r");
-    if (fp == NULL) {
-        fprintf(stderr, "Unable to open file %s\n", filename);
-        exit(EXIT_FAILURE);
-    }
-
-    Parameters* params = malloc(sizeof(Parameters));
-
-    if (params == NULL) {
-        fprintf(stderr, "Unable to allocate memory for parameters\n");
-        fclose(fp);
-        exit(EXIT_FAILURE);
-    }
-
-    fscanf(fp, "%lf", &params->g);
-    fscanf(fp, "%lf", &params->gamma);
-    fscanf(fp, "%lf", &params->deltaX);
-    fscanf(fp, "%lf", &params->deltaY);
-    fscanf(fp, "%lf", &params->deltaT);
-    fscanf(fp, "%u", &params->TMax);
-    fscanf(fp, "%lf", &params->A);
-    fscanf(fp, "%lf", &params->f);
-    fscanf(fp, "%u", &params->S);
-    fscanf(fp, "%u", &params->s);
-    fscanf(fp, "%lf", &params->r_threshold);
-
-    fclose(fp);
-
-    return params;
-}
-
-void printUsefulMapInformation(Map* map){
-
-    printf("X: %d Y: %d\n", map->X, map->Y);
-    printf("a : %lf, b : %lf \n", map->a, map->b);
-    printf("Sampling steps: dx = %lf, dy = %lf\n", map->dx, map->dy);
-}
 
 double bilinearInterpolation(Map* map, double x, double y){
 
@@ -226,16 +95,6 @@ double getGridValueAtDomainCoordinates(Map* map, double x, double y){
     }
 }
 
-void printGrid(Map* map){
-    assert(map);
-    for(int i = 0; i < map->X; i++){
-        for(int j = 0; j < map->Y; j++){
-            printf("%lf ", map->grid[i][j]);
-        }
-        printf("\n");
-    }
-}
-
 
 double** allocateDoubleMatrix(int x, int y){
     assert(x > 0);
@@ -289,94 +148,6 @@ void freeDoubleMatrix(double** matrix, int x, int debug){
     free(matrix);
 }
 
-Map* readMapFile(const char* filename, int debug) {
-    FILE* fp;
-    char buffer[8];
-
-    fp = fopen(filename, "rb");
-    if (fp == NULL) {
-        fprintf(stderr, "Unable to open file %s\n", filename);
-        exit(EXIT_FAILURE);
-    }
-
-    // Read the parameters at the top of the map file
-    // Assumption : there are no spaces and no end of lines, just
-    // contiguous bytes in double precision (8 bytes per unit)
-
-    Map* map = malloc(sizeof(Map));
-
-    if (map == NULL) {
-        fprintf(stderr, "Unable to allocate memory for the map\n");
-        fclose(fp);
-        exit(EXIT_FAILURE);
-    }
-
-
-    // Read constants from the map file
-    fread(buffer, 8, 1, fp);
-    map->a = *((double*)buffer);
-
-    fread(buffer, 8, 1, fp);
-    map->b = *((double*)buffer);
-
-    fread(buffer, 4, 1, fp);
-    map->X = *((int*)buffer);
-
-    fread(buffer, 4, 1, fp);
-    map->Y = *((int*)buffer);
-
-    // Sampling step
-    map->dx = map->a/(map->X -1);
-    map->dy = map->b/(map->Y -1);
-
-    map->grid = allocateDoubleMatrix(map->X, map->Y);
-
-    if (map->grid == NULL) {
-        fprintf(stderr, "Unable to allocate memory for the grid\n");
-        free(map);
-        fclose(fp);
-        exit(EXIT_FAILURE);
-    }
-
-    // Read the bathymetry depth grid from the map file
-
-    long long i = 0;
-    fread(buffer, 8, 1, fp);
-    for(int row = map->Y-1; row >= 0; row--){
-        for(int col = 0; col < map->X;fread(buffer, 8, 1, fp), col++){
-            if(debug == 1)
-                printf("(%d,%d)=%lf\n",col,row,*((double*)buffer));
-            map->grid[col][row] = *((double*)buffer);
-        }
-    }
-    
-    fclose(fp);
-    return map;
-}
-
-void printDoubleMatrix(double** matrix, int x, int y, int process_rank){
-    assert(x > 0);
-    assert(y > 0);
-    assert(matrix != NULL);
-
-    for(int i = 0; i < x; i++){
-        for(int j = 0; j < y; j++){
-        fprintf(stderr,"\tP%d\t", process_rank);
-            fprintf(stderr, "%lf ", matrix[i][j]);
-        }
-        fprintf(stderr, "\n");
-    }
-}
-
-void printLinearArray(double* array, int x, int y){
-    for(int i = 0; i < x * y; i ++){
-        fprintf(stderr,"%lf ", array[i]);
-        if(i != 0 && (i+1) % (x) == 0){
-            fprintf(stderr,"\n");
-        }
-    }
-    fprintf(stderr,"\n");
-}
 
 double* transformMatrixToArray(double** matrix, int x, int y){
     double * array = calloc(x*y, sizeof(double));
@@ -441,26 +212,8 @@ void get_array_sizes(int rank, int nbproc, int xSize, int* size_X, int* size_X_u
 }
 
 
-void getFileNames(char* etaName, char* uName, char* vName, unsigned int filename_size, char* file_suffix){
-    char *etaPrefix = "eta_";
-    char *uPrefix = "u_";
-    char *vPrefix = "v_";
 
-    strncpy(etaName, etaPrefix,filename_size);
-    strncat(etaName, file_suffix,filename_size);
-    strncat(etaName, ".dat",filename_size);
-
-    strncpy(uName, uPrefix,filename_size);
-    strncat(uName, file_suffix,filename_size);
-    strncat(uName, ".dat",filename_size);
-
-    strncpy(vName, vPrefix,filename_size);
-    strncat(vName, file_suffix,filename_size);
-    strncat(vName, ".dat",filename_size);
-}
-
-
-int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize,  int debug, char* file_suffix){
+int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize,  int debug, unsigned int iteration, Parameters* params){
 
     int nbproc, myrank;
     MPI_Comm_size(MPI_COMM_WORLD, &nbproc);
@@ -550,16 +303,9 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
         printLinearArray(vTotal, size_X_u, ySize +2);
     }
 
-
-    char etaFilename[MAX_FILE_SIZE];
-    char uFilename[MAX_FILE_SIZE];
-    char vFilename[MAX_FILE_SIZE];
-
-    getFileNames(etaFilename, uFilename, vFilename, MAX_FILE_SIZE, file_suffix);
-
-    writeResultArray(etaFilename, size_X, ySize+1, etaTotal, 0);
-    writeResultArray(uFilename, size_X_u, ySize+2, uTotal, 0);
-    writeResultArray(vFilename, size_X_u, ySize+1, vTotal, 0);
+    if(myrank == 0){
+        saveToDisk(etaTotal, uTotal, vTotal, size_X, size_X_u, ySize, iteration, params);
+    }
 
     free(etaTotal);
     free(uTotal);
@@ -888,15 +634,11 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         }
 
 
-        //Save arrays to disk
+        // Process 0 saves arrays to disk
         params->S = 1000;
         if(params->S != 0 && t % params->S == 0){
-            printf("Save results, %u\n", t);
-            char file_suffix[MAX_FILE_SIZE];
-            snprintf(file_suffix, MAX_FILE_SIZE,"%u___0_%.2lf_%.2lf_%.2lf_%u_%.1lf", \
-                t, params->deltaX, params->deltaY, params->deltaT, params->s, params->r_threshold);
-
-            gather_and_save(etaNext,uNext,vNext, xSize,ySize, debug, file_suffix);
+            // Gather the matrices and save to disk
+            gather_and_save(etaNext,uNext,vNext, xSize,ySize, debug, t, params);
         }
 
         // Go to next step
@@ -1004,24 +746,9 @@ int main(int argc, char* argv[]) {
             printDoubleMatrix(v, size_X, ySize + 2,myrank);
         }
 
-        char file_suffix[MAX_FILE_SIZE];
-        snprintf(file_suffix, MAX_FILE_SIZE,"%f___0_%lf_%lf_%lf_%u_%lf", \
-            params->TMax/params->deltaT, params->deltaX, params->deltaY, \
-            params->deltaT, params->s, params->r_threshold);
-
-        if(gather_and_save(eta,u,v, xSize,ySize, debug, file_suffix) == -1){
-
-            fprintf(stderr, "error in gather_and_save function\n");
-            freeDoubleMatrix(eta, size_X, 0);
-            freeDoubleMatrix(u, size_X_u, 0);
-            freeDoubleMatrix(v, size_X, 0);
-            free(params);
-            free(map->grid);
-            free(map);
-
-            exit(EXIT_FAILURE);
-
-        }
+        // Gather the matrices and save to disk
+        gather_and_save(eta,u,v, xSize,ySize, debug, params->TMax/params->deltaT + 1, params);
+        
 
         if(debug == 1){
             fprintf(stderr, "process %d before free matrix\n", myrank);
@@ -1054,12 +781,12 @@ int main(int argc, char* argv[]) {
     double executionTime = endTime - startTime;
     char* openMP_nbthreads = getenv("OMP_NUM_THREADS");
 
-    // For file output
-    fprintf(stdout,"%d,%d,%d,%s,%lf,%lf,%lf,%lf,%u,%lf\n", scheme, myrank, nbproc, \
+    // Print statistics to standard error output so that it does not buffer
+    fprintf(stderr,"statistics_%d,%d,%d,%s,%lf,%lf,%lf,%lf,%u,%lf\n", scheme, myrank, nbproc, \
                 openMP_nbthreads, executionTime, params->deltaX, params->deltaY, \
                 params->deltaT, params->s, params->r_threshold);
     MPI_Finalize();
-    
+
     return 0;
 
 }
