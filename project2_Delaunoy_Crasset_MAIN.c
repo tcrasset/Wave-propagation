@@ -452,6 +452,9 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             vCurr[i][j] = 0;
     }
 
+    double* uReceived = malloc((ySize + 1) * sizeof(double));
+    double* etaReceived = malloc((ySize + 1) * sizeof(double));
+    
     for(unsigned int t = 1; t <= params->TMax/params->deltaT; t++){
 
         if(debug == 1){
@@ -466,7 +469,6 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         if(debug == 1){
             fprintf(stderr, "Process %d Fails before etaNext\n", myrank);
         }
-        double* uReceived = malloc((ySize + 1) * sizeof(double));
 
         if(debug == 1){
             fprintf(stderr, "Process %d allocated uReceived\n", myrank);
@@ -520,8 +522,6 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
                 uNext[size_X_u - 1][i] = 0;
             }
         }
-
-        double* etaReceived = malloc((ySize + 1) * sizeof(double));
 
         if(debug == 1){
             fprintf(stderr, "Process %d allocated etaReceived\n", myrank);
