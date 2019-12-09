@@ -8,5 +8,5 @@ homePath=/home/tom/Documents/Uliege/Master2/HPC/Project2/Results
 serverPath=/home/ulg/info0939/tcrasset/Project2/Results
 
 ssh-add $rsaPath
-
-scp -i $rsaPath $user@$server:$serverPath/* $homePath
+# Copy whole Results/ folder from the Cluster to the Results folder on the personal PC
+scp -i $rsaPath -r $user@$server:$serverPath/* $homePath
