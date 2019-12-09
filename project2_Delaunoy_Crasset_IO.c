@@ -236,9 +236,9 @@ void printGrid(Map* map) {
 }
 
 void getFileNames(char* etaName, char* uName, char* vName, char* dir_name, unsigned int iteration) {
-    char* etaPrefix = "eta_";
-    char* uPrefix = "u_";
-    char* vPrefix = "v_";
+    char* etaPrefix = "eta";
+    char* uPrefix = "u";
+    char* vPrefix = "v";
 
     char file_suffix[MAX_FILE_SIZE];
     snprintf(file_suffix, MAX_FILE_SIZE, "_%u", iteration);

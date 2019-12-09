@@ -1,9 +1,9 @@
 #!/bin/bash
 # Submission script for NIC4
 #SBATCH --job-name=TestRun
-#SBATCH --time=00:00:30 # hh:mm:ss
+#SBATCH --time=00:10:00 # hh:mm:ss
 #
-#SBATCH --mem-per-cpu=100 # megabytes
+#SBATCH --mem-per-cpu=8000 # megabytes
 #SBATCH --partition=defq
 #
 #SBATCH --mail-user=tomcrasset@gmail.com
@@ -30,5 +30,5 @@ echo "Scheme,Process number,Number of processes,Number of threads,Time per proce
 
 while IFS="" read -r parameter_file || [ -n "$parameter_file" ]
 do
-    mpirun -np $SLURM_NTASKS waves $serverPath/$parameter_file test_map.dat 0 0 0 >> $output_filename
+    mpirun -np $SLURM_NTASKS waves $serverPath/$parameter_file $serverPath/refraction.dat 0 0 0 >> $output_filename
 done < namesOfParameterFiles.txt

@@ -1,6 +1,6 @@
 #!/bin/bash
 module load openmpi
-mpicc -g project2_Delaunoy_Crasset.c -std=c99 -lm -fopenmp -o waves
+mpicc -g project2_Delaunoy_Crasset*.c -std=c99 -lm -fopenmp -o waves
 
 serverPath=/home/ulg/info0939/tcrasset/Project2/Results
 

@@ -635,7 +635,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
 
 
         // Process 0 saves arrays to disk
-        params->S = 1000;
+        params->S = 2;
         if(params->S != 0 && t % params->S == 0){
             // Gather the matrices and save to disk
             gather_and_save(etaNext,uNext,vNext, xSize,ySize, debug, t, params);
@@ -674,6 +674,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
 }
 
 int main(int argc, char* argv[]) {
+
     // Check number of arguments
     int debug, debug_rank;
     assert(argc >= 4);
@@ -704,11 +705,9 @@ int main(int argc, char* argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &nbproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-    // writeTestMap("test_map.dat", debug);
-
     Parameters* params = readParameterFile(parameter_file);
-    // Map* map = readMapFile("serverFiles/refraction.dat", 0);
-    Map* map = readMapFile("test_map.dat", 0);
+    Map* map = readMapFile(map_file, 0);
+    // Map* map = readMapFile("test_map.dat", 0);
     if(debug == 1)
         printDoubleMatrix(map->grid, map->X, map->Y, myrank);
 
@@ -781,8 +780,8 @@ int main(int argc, char* argv[]) {
     double executionTime = endTime - startTime;
     char* openMP_nbthreads = getenv("OMP_NUM_THREADS");
 
-    // Print statistics to standard error output so that it does not buffer
-    fprintf(stderr,"statistics_%d,%d,%d,%s,%lf,%lf,%lf,%lf,%u,%lf\n", scheme, myrank, nbproc, \
+    // Print statistics to standard output
+    fprintf(stdout,"%d,%d,%d,%s,%lf,%lf,%lf,%lf,%u,%lf\n", scheme, myrank, nbproc, \
                 openMP_nbthreads, executionTime, params->deltaX, params->deltaY, \
                 params->deltaT, params->s, params->r_threshold);
     MPI_Finalize();
