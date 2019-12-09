@@ -291,15 +291,16 @@ int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int si
             }
         }
 
-    } else {
-        // Create file names
-        char etaFilename[MAX_FILE_SIZE];
-        char uFilename[MAX_FILE_SIZE];
-        char vFilename[MAX_FILE_SIZE];
-        getFileNames(etaFilename, uFilename, vFilename, full_path, iteration);
-
-        writeResultArray(etaFilename, size_X, ySize + 1, etaTotal, 0);
-        writeResultArray(uFilename, size_X_u, ySize + 2, uTotal, 0);
-        writeResultArray(vFilename, size_X_u, ySize + 1, vTotal, 0);
     }
+    
+    // Create file names
+    char etaFilename[MAX_FILE_SIZE];
+    char uFilename[MAX_FILE_SIZE];
+    char vFilename[MAX_FILE_SIZE];
+    getFileNames(etaFilename, uFilename, vFilename, full_path, iteration);
+
+    writeResultArray(etaFilename, size_X, ySize + 1, etaTotal, 0);
+    writeResultArray(uFilename, size_X_u, ySize + 2, uTotal, 0);
+    writeResultArray(vFilename, size_X_u, ySize + 1, vTotal, 0);
+
 }
