@@ -82,9 +82,9 @@ double bilinearInterpolation(Map* map, double x, double y){
 }
 
 double getGridValueAtDomainCoordinates(Map* map, double x, double y){
+    double epsilon = 10e-6;
     assert(x >= 0);
     assert(y >= 0);
-    double epsilon = 10e-6;
     // Sampling step
 
     // If value already in the grid, use that instead of interpolating
@@ -202,7 +202,7 @@ void get_array_sizes(int rank, int nbproc, int xSize, int* size_X, int* size_X_u
         *endval_X_h += (rank + 1) * 2;
     }
     else{
-        *startval_X_h += (remaining-1) * 2;
+        *startval_X_h += remaining * 2;
         *endval_X_h += remaining * 2;
     }
 
