@@ -165,9 +165,9 @@ void writeResultMatrix(char* filename, int xsize, int ysize, double** matrix, in
 }
 
 void writeResultArray(char* filename, int xsize, int ysize, double* array, int debug) {
-    FILE* fp;
+    
+    FILE* fp = fopen(filename, "wb");
 
-    fp = fopen(filename, "wb");
     if (fp == NULL) {
         fprintf(stderr, "Unable to open file %s\n", filename);
         exit(EXIT_FAILURE);
