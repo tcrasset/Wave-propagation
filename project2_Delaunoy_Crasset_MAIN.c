@@ -458,7 +458,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     for(unsigned int t = 1; t <= params->TMax/params->deltaT; t++){
 
         if(debug == 1){
-            fprintf(stderr, "Process%d begin loop %d/%d\n", myrank, t, params->TMax);
+        fprintf(stderr, "Process%d begin loop %d/%f\n", myrank, t, params->TMax/params->deltaT);
         }
 
         if(debug == 1 && myrank == debug_rank){
@@ -562,13 +562,11 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         }
         else if(myrank == nbproc-1){
             for(int j = 0; j < ySize + 1; j++){
-                uNext[0][j] = (-params->g * (etaCurr[0][j] - etaReceived[j]) / params->deltaX
-                               -params->gamma * uCurr[0][j]) * params->deltaT + uCurr[0][j];
+                uNext[0][j] = ((-params->g * (etaCurr[0][j] - etaReceived[j]) / params->deltaX) * params->deltaT) + uCurr[0][j];
             }
             for(int i = 1; i < size_X_u-1; i++){ 
                 for(int j = 0; j < ySize + 1; j++){
-                    uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
-                                -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
+                    uNext[i][j] = ((-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX) * params->deltaT) + uCurr[i][j];
                 }
             }
         }
@@ -577,13 +575,11 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         else{
             
             for(int j = 0; j < ySize + 1; j++){
-                uNext[0][j] = (-params->g * (etaCurr[0][j] - etaReceived[j]) / params->deltaX
-                               -params->gamma * uCurr[0][j]) * params->deltaT + uCurr[0][j];
+                uNext[0][j] = ((-params->g * (etaCurr[0][j] - etaReceived[j]) / params->deltaX) * params->deltaT) + uCurr[0][j];
             }
             for(int i = 1; i < size_X_u; i++){ // Shouldn't that be size_X_u ? Or is it because one starts at 1 and not 0
                 for(int j = 0; j < ySize + 1; j++){
-                    uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
-                                -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
+                    uNext[i][j] = ((-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX) * params->deltaT) + uCurr[i][j];
                 }
             }
         }
@@ -608,8 +604,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             fprintf(stderr, "Process %d before v loop \n", myrank);
         for(int i = 0; i < size_X; i++){
             for(int j = 1; j < ySize + 1; j++){
-                vNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i][j-1]) / params->deltaY
-                               -params->gamma * vCurr[i][j]) * params->deltaT + vCurr[i][j];
+                vNext[i][j] = ((-params->g * (etaCurr[i][j] - etaCurr[i][j-1]) / params->deltaY ) * params->deltaT) + vCurr[i][j];
             }
         }
 
@@ -635,7 +630,6 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
 
 
         // Process 0 saves arrays to disk
-        params->S = 2;
         if(params->S != 0 && t % params->S == 0){
             // Gather the matrices and save to disk
             gather_and_save(etaNext,uNext,vNext, xSize,ySize, debug, t, params);
@@ -669,6 +663,9 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     freeDoubleMatrix(uNext, size_X_u,0);
     freeDoubleMatrix(vNext, size_X,0);
     freeDoubleMatrix(h, size_X_h,0);
+    
+    free(uReceived);
+    free(etaReceived);
 
     return 0;
 }
