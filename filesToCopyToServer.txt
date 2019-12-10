@@ -2,8 +2,7 @@ project2_Delaunoy_Crasset_MAIN.c
 project2_Delaunoy_Crasset_MAIN.h
 project2_Delaunoy_Crasset_IO.c
 project2_Delaunoy_Crasset_IO.h
-test_map.dat
-Parameters/test_param.txt
+Parameters/base_params.txt
 multiprocess_computation.sh
 project2_launch.sh
 namesOfParameterFiles.txt

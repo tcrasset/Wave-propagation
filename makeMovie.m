@@ -1,9 +1,9 @@
-function makeMovie(field, filename, step, max)
+function makeMovie(field, filename, start, step, max)
   mov = VideoWriter('movie.avi');
   open(mov);
-  for i = 2:step:max
+  for i = start:step:max
     i
-    complete_name = sprintf('Results/%s/%s__%d.dat', filename, field, i);
+    complete_name = sprintf('Results/%s/%s_%d.dat', filename, field, i);
     fid = fopen(complete_name, 'r');
     N = fread(fid,1,'int32');
     M = fread(fid,1,'int32');
