@@ -259,6 +259,7 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
 
     if(!recvcounts_eta || !recvcounts_u || !recvcounts_v || !disp_eta || !disp_u || !disp_v){
         fprintf(stderr, "error malloc recvcounts\n");
+        MPI_Finalize();
         exit(-1);
     }
 
@@ -313,6 +314,14 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
 }
 
 int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, double*** v, int debug, int debug_rank){
+    
+    // int i = 0;
+    // char hostname[256];
+    // gethostname(hostname, sizeof(hostname));
+    // printf("PID %d on %s ready for attach\n", getpid(), hostname);
+    // fflush(stderr);
+    // while (0 == i)
+    // sleep(5);
 
     assert(map);
     assert(params);
@@ -726,8 +735,9 @@ int main(int argc, char* argv[]) {
             free(params);
             free(map->grid);
             free(map);
-
-            //exit(EXIT_FAILURE)
+            MPI_Finalize();
+            exit(EXIT_FAILURE);
+            
         }
 
         int xSize = (int)(map->a / params->deltaX);
