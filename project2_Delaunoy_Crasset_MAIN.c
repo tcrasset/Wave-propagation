@@ -443,30 +443,34 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     //     printf("apres h\n");
     // }
 
-
-    for(int i = 0; i < size_X; i++){
-        for(int j = 0; j < ySize; j++){
-            etaCurr[i][j] = 0;
+    #pragma omp parallel default(shared)
+    {
+        for(int i = 0; i < size_X; i++){
+            #pragma omp for schedule(static)
+            for(int j = 0; j < ySize; j++){
+                etaCurr[i][j] = 0;
+            }
+        }
+        for(int i = 0; i < size_X_u; i++){
+            #pragma omp for schedule(static)
+            for(int j = 0; j < ySize; j++){
+                uCurr[i][j] = 0;
+            }
+        }
+        for(int i = 0; i < size_X; i++){
+            #pragma omp for schedule(static)
+            for(int j = 0; j < ySize; j++)
+                vCurr[i][j] = 0;
         }
     }
 
-    for(int i = 0; i < size_X_u; i++){
-        for(int j = 0; j < ySize; j++){
-            uCurr[i][j] = 0;
-        }
-    }
-
-    for(int i = 0; i < size_X; i++){
-        for(int j = 0; j < ySize; j++)
-            vCurr[i][j] = 0;
-    }
 
     double* uReceived = malloc((ySize + 1) * sizeof(double));
     double* etaReceived = malloc((ySize + 1) * sizeof(double));
     
     for(unsigned int t = 1; t <= params->TMax/params->deltaT; t++){
 
-        if(debug == 1){
+        if(debug == 0){
             fprintf(stderr, "Process%d begin loop %d/%f\n", myrank, t, params->TMax/params->deltaT);
         }
 
@@ -492,28 +496,33 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
                          uReceived, ySize + 1, MPI_DOUBLE, myrank + 1, 42,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
 
-        if(myrank == nbproc-1){
-            // Process etaNext in one block
-            for(int i = 0; i < size_X; i++){
-                for(int j = 0; j < ySize + 1; j++){
-                    etaNext[i][j] = (-(h[2*i+2][2*j+1] * uCurr[i+1][j] - h[2*i][2*j+1] * uCurr[i][j]) / params->deltaX 
-                                    -(h[2*i+1][2*j+2] * vCurr[i][j+1] - h[2*i+1][2*j] * vCurr[i][j]) / params->deltaY)
-                                    * params->deltaT + etaCurr[i][j];
+        #pragma omp parallel default(shared)
+        {
+            if(myrank == nbproc-1){
+                // Process etaNext in one block
+                for(int i = 0; i < size_X; i++){
+                    #pragma omp for schedule(static)
+                    for(int j = 0; j < ySize + 1; j++){
+                        etaNext[i][j] = (-(h[2*i+2][2*j+1] * uCurr[i+1][j] - h[2*i][2*j+1] * uCurr[i][j]) / params->deltaX 
+                                        -(h[2*i+1][2*j+2] * vCurr[i][j+1] - h[2*i+1][2*j] * vCurr[i][j]) / params->deltaY)
+                                        * params->deltaT + etaCurr[i][j];
+                    }
                 }
             }
-        }
-        else{
-            for(int i = 0; i < size_X - 1; i++){
-                for(int j = 0; j < ySize + 1; j++){
-                    etaNext[i][j] = (-(h[2*i+2][2*j+1] * uCurr[i+1][j] - h[2*i][2*j+1] * uCurr[i][j]) / params->deltaX 
-                                    -(h[2*i+1][2*j+2] * vCurr[i][j+1] - h[2*i+1][2*j] * vCurr[i][j]) / params->deltaY)
-                                    * params->deltaT + etaCurr[i][j];
+            else{
+                for(int i = 0; i < size_X - 1; i++){
+                    #pragma omp for schedule(static)
+                    for(int j = 0; j < ySize + 1; j++){
+                        etaNext[i][j] = (-(h[2*i+2][2*j+1] * uCurr[i+1][j] - h[2*i][2*j+1] * uCurr[i][j]) / params->deltaX 
+                                        -(h[2*i+1][2*j+2] * vCurr[i][j+1] - h[2*i+1][2*j] * vCurr[i][j]) / params->deltaY)
+                                        * params->deltaT + etaCurr[i][j];
+                    }
                 }
-            }
-            for(int j = 0; j < ySize + 1; j++){
-                etaNext[size_X-1][j] = (-(h[2*(size_X-1)+2][2*j+1] * uReceived[j] - h[2*(size_X-1)][2*j+1] * uCurr[size_X-1][j]) / params->deltaX 
-                                -(h[2*(size_X-1)+1][2*j+2] * vCurr[size_X-1][j+1] - h[2*(size_X-1)+1][2*j] * vCurr[size_X-1][j]) / params->deltaY)
-                                * params->deltaT + etaCurr[size_X-1][j];
+                for(int j = 0; j < ySize + 1; j++){
+                    etaNext[size_X-1][j] = (-(h[2*(size_X-1)+2][2*j+1] * uReceived[j] - h[2*(size_X-1)][2*j+1] * uCurr[size_X-1][j]) / params->deltaX 
+                                    -(h[2*(size_X-1)+1][2*j+2] * vCurr[size_X-1][j+1] - h[2*(size_X-1)+1][2*j] * vCurr[size_X-1][j]) / params->deltaY)
+                                    * params->deltaT + etaCurr[size_X-1][j];
+                }
             }
         }
 
@@ -560,42 +569,50 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             fprintf(stderr, "Process %d start unext\n", myrank);
         }
         
-        // Process uNext in one block
-        if(myrank == 0){
-            for(int i = 1; i < size_X_u; i++){
-                for(int j = 0; j < ySize + 1; j++){
-                    uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
-                                -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
+        #pragma omp parallel default(shared)
+        {
+            // Process uNext in one block
+            if(myrank == 0){
+                for(int i = 1; i < size_X_u; i++){
+                    #pragma omp for schedule(static)
+                    for(int j = 0; j < ySize + 1; j++){
+                        uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
+                                    -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
+                    }
                 }
             }
-        }
-        else if(myrank == nbproc-1){
-            for(int j = 0; j < ySize + 1; j++){
-                uNext[0][j] = (-params->g * (etaCurr[0][j] - etaReceived[j]) / params->deltaX
-                               -params->gamma * uCurr[0][j]) * params->deltaT + uCurr[0][j];
-            }
-            for(int i = 1; i < size_X_u-1; i++){ 
+            else if(myrank == nbproc-1){
                 for(int j = 0; j < ySize + 1; j++){
-                    uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
-                                                    -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
+                    uNext[0][j] = (-params->g * (etaCurr[0][j] - etaReceived[j]) / params->deltaX
+                                -params->gamma * uCurr[0][j]) * params->deltaT + uCurr[0][j];
+                }
+                for(int i = 1; i < size_X_u-1; i++){ 
+                    #pragma omp for schedule(static)
+                    for(int j = 0; j < ySize + 1; j++){
+                        uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
+                                                        -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
+                    }
+                }
+            }
+
+            // Process uNext[0] alone because of etaReceived in one block
+            else{
+                
+                for(int j = 0; j < ySize + 1; j++){
+                    uNext[0][j] = (-params->g * (etaCurr[0][j] - etaReceived[j]) / params->deltaX
+                                -params->gamma * uCurr[0][j]) * params->deltaT + uCurr[0][j];
+                }
+                for(int i = 1; i < size_X_u; i++){ // Shouldn't that be size_X_u ? Or is it because one starts at 1 and not 0
+                    #pragma omp for schedule(static)
+                    for(int j = 0; j < ySize + 1; j++){
+                        uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
+                                    -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
+                    }
                 }
             }
         }
 
-        // Process uNext[0] alone because of etaReceived in one block
-        else{
-            
-            for(int j = 0; j < ySize + 1; j++){
-                uNext[0][j] = (-params->g * (etaCurr[0][j] - etaReceived[j]) / params->deltaX
-                               -params->gamma * uCurr[0][j]) * params->deltaT + uCurr[0][j];
-            }
-            for(int i = 1; i < size_X_u; i++){ // Shouldn't that be size_X_u ? Or is it because one starts at 1 and not 0
-                for(int j = 0; j < ySize + 1; j++){
-                    uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
-                                -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
-                }
-            }
-        }
+
         if(debug == 1){
             fprintf(stderr, "Process %d end unext\n", myrank);
             fprintf(stderr, "Process %d start vnext\n", myrank);
@@ -615,10 +632,15 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         }
         if(debug == 1)
             fprintf(stderr, "Process %d before v loop \n", myrank);
-        for(int i = 0; i < size_X; i++){
-            for(int j = 1; j < ySize + 1; j++){
-                vNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i][j-1]) / params->deltaY
-                               -params->gamma * vCurr[i][j]) * params->deltaT + vCurr[i][j];
+
+        #pragma omp parallel default(shared)
+        {
+            for(int i = 0; i < size_X; i++){
+                #pragma omp for schedule(static)
+                for(int j = 1; j < ySize + 1; j++){
+                    vNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i][j-1]) / params->deltaY
+                                -params->gamma * vCurr[i][j]) * params->deltaT + vCurr[i][j];
+                }
             }
         }
 
