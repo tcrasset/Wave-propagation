@@ -2,7 +2,8 @@ project2_Delaunoy_Crasset_MAIN.c
 project2_Delaunoy_Crasset_MAIN.h
 project2_Delaunoy_Crasset_IO.c
 project2_Delaunoy_Crasset_IO.h
-Parameters/base_params.txt
+Parameters/base_params_refraction.txt
+Parameters/base_params_sriLanka.txt
 multiprocess_computation.sh
 project2_launch.sh
 namesOfParameterFiles.txt
