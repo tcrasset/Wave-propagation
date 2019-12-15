@@ -259,6 +259,7 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
 
     if(!recvcounts_eta || !recvcounts_u || !recvcounts_v || !disp_eta || !disp_u || !disp_v){
         fprintf(stderr, "error malloc recvcounts\n");
+        MPI_Finalize();
         exit(-1);
     }
 
@@ -322,6 +323,14 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
 }
 
 int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, double*** v, int debug, int debug_rank){
+    
+    // int i = 0;
+    // char hostname[256];
+    // gethostname(hostname, sizeof(hostname));
+    // printf("PID %d on %s ready for attach\n", getpid(), hostname);
+    // fflush(stderr);
+    // while (0 == i)
+    // sleep(5);
 
     assert(map);
     assert(params);
@@ -470,7 +479,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     for(unsigned int t = 1; t <= params->TMax/params->deltaT; t++){
 
         if(debug == 1){
-            fprintf(stderr, "Process%d begin loop %d/%d\n", myrank, t, params->TMax);
+            fprintf(stderr, "Process%d begin loop %d/%f\n", myrank, t, params->TMax/params->deltaT);
         }
 
         if(debug == 1 && myrank == debug_rank){
@@ -580,7 +589,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             for(int i = 1; i < size_X_u-1; i++){ 
                 for(int j = 0; j < ySize + 1; j++){
                     uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
-                                -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
+                                                    -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
                 }
             }
         }
@@ -647,7 +656,6 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
 
 
         // Process 0 saves arrays to disk
-        params->S = 2;
         if(params->S != 0 && t % params->S == 0){
             // Gather the matrices and save to disk
             gather_and_save(etaNext,uNext,vNext, xSize,ySize, debug, t, params);
@@ -681,6 +689,9 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     freeDoubleMatrix(uNext, size_X_u,0);
     freeDoubleMatrix(vNext, size_X,0);
     freeDoubleMatrix(h, size_X_h,0);
+    
+    free(uReceived);
+    free(etaReceived);
 
     return 0;
 }
@@ -736,8 +747,9 @@ int main(int argc, char* argv[]) {
             free(params);
             free(map->grid);
             free(map);
-
-            //exit(EXIT_FAILURE)
+            MPI_Finalize();
+            exit(EXIT_FAILURE);
+            
         }
 
         int xSize = (int)(map->a / params->deltaX);
