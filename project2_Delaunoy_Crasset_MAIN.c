@@ -315,11 +315,11 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
 
     if(debug == 1 && myrank == 0){
         fprintf(stderr,"***********ETA TOTAL**************\n");
-        printLinearArray(etaTotal, size_X, ySize +1);
+        printLinearArray(etaTotal, xSize + 1, ySize +1);
         fprintf(stderr,"***********U TOTAL**************\n");
-        printLinearArray(uTotal, size_X_u, ySize +1);
+        printLinearArray(uTotal, xSize + 2, ySize +1);
         fprintf(stderr,"***********V TOTAL**************\n");
-        printLinearArray(vTotal, size_X_u, ySize +2);
+        printLinearArray(vTotal, xSize + 1, ySize +2);
     }
 
     if(myrank == 0){
