@@ -1,7 +1,10 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
+#define MAX_FILE_SIZE 500
+
 typedef struct Parameters {
+    const char* filename;
     double g;
     double gamma;
     double deltaX;
@@ -32,15 +35,14 @@ typedef struct SparseMatrix {
     unsigned int* v;
 } SparseMatrix;
 
-void writeTestMap(char* filename, int debug);
-void writeResultMatrix(char* filename, int xsize, int ysize, double** matrix, int debug);
-
-Parameters* readParameterFile(const char* filename);
+SparseMatrix* toSparseMatrix(double** matrix, int xSize, int ySize);
 void printUsefulMapInformation(Map* map);
 double bilinearInterpolation(Map* map, double x, double y);
 double getGridValueAtDomainCoordinates(Map* map, double x, double y);
-void printGrid(Map* map);
-Map* readMapFile(const char* filename, int debug);
-int eulerExplicit(Map* map, Parameters* params, double*** eta, double*** u, double*** v, int debug);
-
+double** allocateDoubleMatrix(int x, int y);
+void freeDoubleMatrix(double** matrix, int x, int debug);
+double* transformMatrixToArray(double** matrix, int x, int y);
+void get_array_sizes(int rank, int nbproc, int xSize, int* size_X, int* size_X_u, int* size_X_h, int* startval_X_h, int* endval_X_h);
+int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize,  int debug, unsigned int iteration, Parameters* params);
+int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, double*** v, int debug, int debug_rank);
 #endif  // MAIN_H_
