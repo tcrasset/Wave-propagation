@@ -294,6 +294,15 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
     free(disp_u);
     free(disp_v);
 
+    if(myrank == 0){
+        fprintf(stderr,"***********ETA TOTAL**************\n");
+        printLinearArray(etaTotal, size_X, ySize +1);
+        fprintf(stderr,"***********U TOTAL**************\n");
+        printLinearArray(uTotal, size_X_u, ySize +1);
+        fprintf(stderr,"***********V TOTAL**************\n");
+        printLinearArray(vTotal, size_X_u, ySize +2);
+    }
+
     if(debug == 1 && myrank == 0){
         fprintf(stderr,"***********ETA TOTAL**************\n");
         printLinearArray(etaTotal, size_X, ySize +1);
@@ -418,6 +427,9 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         }
     }
 
+    fprintf(stderr, "Process %i \n", myrank);
+    printDoubleMatrix(h, endval_X_h - startval_X_h + 1, 2*ySize + 3, myrank);
+
     if(debug == 1){
         fprintf(stderr, "Process %d Does not fail at h fill\n", myrank);
     }
@@ -454,7 +466,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
 
     double* uReceived = malloc((ySize + 1) * sizeof(double));
     double* etaReceived = malloc((ySize + 1) * sizeof(double));
-    
+
     for(unsigned int t = 1; t <= params->TMax/params->deltaT; t++){
 
         if(debug == 1){
