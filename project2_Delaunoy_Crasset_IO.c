@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
+#include <mpi.h>
 #include "project2_Delaunoy_Crasset_MAIN.h"
 
 void printDoubleMatrix(double** matrix, int x, int y, int process_rank) {
@@ -43,6 +44,7 @@ Map* readMapFile(const char* filename, int debug) {
     fp = fopen(filename, "rb");
     if (fp == NULL) {
         fprintf(stderr, "Unable to open file %s\n", filename);
+        MPI_Finalize();
         exit(EXIT_FAILURE);
     }
 
@@ -55,6 +57,7 @@ Map* readMapFile(const char* filename, int debug) {
     if (map == NULL) {
         fprintf(stderr, "Unable to allocate memory for the map\n");
         fclose(fp);
+        MPI_Finalize();
         exit(EXIT_FAILURE);
     }
 
@@ -81,6 +84,7 @@ Map* readMapFile(const char* filename, int debug) {
         fprintf(stderr, "Unable to allocate memory for the grid\n");
         free(map);
         fclose(fp);
+        MPI_Finalize();
         exit(EXIT_FAILURE);
     }
 
@@ -106,6 +110,7 @@ Parameters* readParameterFile(const char* filename) {
     fp = fopen(filename, "r");
     if (fp == NULL) {
         fprintf(stderr, "Unable to open file %s\n", filename);
+        MPI_Finalize();
         exit(EXIT_FAILURE);
     }
 
@@ -114,6 +119,7 @@ Parameters* readParameterFile(const char* filename) {
     if (params == NULL) {
         fprintf(stderr, "Unable to allocate memory for parameters\n");
         fclose(fp);
+        MPI_Finalize();
         exit(EXIT_FAILURE);
     }
     params->filename = filename;
@@ -146,6 +152,7 @@ void writeResultMatrix(char* filename, int xsize, int ysize, double** matrix, in
     fp = fopen(filename, "wb");
     if (fp == NULL) {
         fprintf(stderr, "Unable to open file %s\n", filename);
+        MPI_Finalize();
         exit(EXIT_FAILURE);
     }
 
@@ -170,6 +177,7 @@ void writeResultArray(char* filename, int xsize, int ysize, double* array, int d
 
     if (fp == NULL) {
         fprintf(stderr, "Unable to open file %s\n", filename);
+        MPI_Finalize();
         exit(EXIT_FAILURE);
     }
 
@@ -287,6 +295,7 @@ int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int si
             status = mkdir(full_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             if (status == -1) {
                 fprintf(stderr, "Error in saveToDisk = %s\n" , strerror(errno));
+                MPI_Finalize();
                 exit(EXIT_FAILURE);
             }
         }
