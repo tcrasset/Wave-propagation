@@ -270,16 +270,23 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
         recvcounts_v[i] = tmp_size_X * (ySize + 2);
 
         if(i == 0){
-            disp_eta[i] = 0;
-            disp_u[i] = 0;
-            disp_v[i] = 0;
+            disp_eta[0] = 0;
+            disp_u[0] = 0;
+            disp_v[0] = 0;
         }
-        else{
-            disp_eta[i] = disp_eta[i-1] + tmp_size_X * (ySize + 1);
-            disp_u[i] = disp_u[i-1] + tmp_size_X_u * (ySize + 1);
-            disp_v[i] = disp_v[i-1] + tmp_size_X * (ySize + 2);
+        if (i < nbproc - 1){
+            disp_eta[i + 1] = disp_eta[i] + tmp_size_X * (ySize + 1);
+            disp_u[i + 1] = disp_u[i] + tmp_size_X_u * (ySize + 1);
+            disp_v[i + 1] = disp_v[i] + tmp_size_X * (ySize + 2);
         }
     }
+
+    /*
+    for (int i = 0; i < nbproc; i++){
+        fprintf(stderr, "recvcount % d = %d \n", i, recvcounts_v[i]);
+        fprintf(stderr, "disp % d = %d \n", i, disp_v[i]);
+    }
+    */
 
     double * etaTotal = malloc((xSize + 1) * (ySize  + 1)* sizeof(double));
     double * uTotal = malloc((xSize + 2) * (ySize  + 1)* sizeof(double));
@@ -295,14 +302,16 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
     free(disp_u);
     free(disp_v);
 
+    /*
     if(myrank == 0){
         fprintf(stderr,"***********ETA TOTAL**************\n");
-        printLinearArray(etaTotal, size_X, ySize +1);
+        printLinearArray(etaTotal, xSize + 1, ySize +1);
         fprintf(stderr,"***********U TOTAL**************\n");
-        printLinearArray(uTotal, size_X_u, ySize +1);
+        printLinearArray(uTotal, xSize + 2, ySize +1);
         fprintf(stderr,"***********V TOTAL**************\n");
-        printLinearArray(vTotal, size_X_u, ySize +2);
+        printLinearArray(vTotal, xSize + 1, ySize +2);
     }
+    */
 
     if(debug == 1 && myrank == 0){
         fprintf(stderr,"***********ETA TOTAL**************\n");
@@ -339,6 +348,11 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
 
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     MPI_Comm_size(MPI_COMM_WORLD, &nbproc);
+
+    /*
+    fprintf(stderr, "map->a = %lf\n", map->a);
+    fprintf(stderr, "map->b = %lf\n", map->b);
+    */
 
     int xSize = (int)(map->a / params->deltaX);
     int ySize = (int)(map->b / params->deltaY);
@@ -436,8 +450,12 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         }
     }
 
-    fprintf(stderr, "Process %i \n", myrank);
-    printDoubleMatrix(h, endval_X_h - startval_X_h + 1, 2*ySize + 3, myrank);
+    /*
+    if(myrank == 0){
+        fprintf(stderr, "Process %i \n", myrank);
+        printDoubleMatrix(h, endval_X_h - startval_X_h + 1, 2*ySize + 3, myrank);
+    }
+    */
 
     if(debug == 1){
         fprintf(stderr, "Process %d Does not fail at h fill\n", myrank);
@@ -457,26 +475,28 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
 
 
     for(int i = 0; i < size_X; i++){
-        for(int j = 0; j < ySize; j++){
+        for(int j = 0; j < ySize + 1; j++){
             etaCurr[i][j] = 0;
         }
     }
 
     for(int i = 0; i < size_X_u; i++){
-        for(int j = 0; j < ySize; j++){
+        for(int j = 0; j < ySize + 1; j++){
             uCurr[i][j] = 0;
         }
     }
 
     for(int i = 0; i < size_X; i++){
-        for(int j = 0; j < ySize; j++)
+        for(int j = 0; j < ySize + 2; j++)
             vCurr[i][j] = 0;
     }
 
     double* uReceived = malloc((ySize + 1) * sizeof(double));
     double* etaReceived = malloc((ySize + 1) * sizeof(double));
 
-    for(unsigned int t = 1; t <= params->TMax/params->deltaT; t++){
+    for(unsigned int t = 1; t <= params->TMax; t++){
+
+        //fprintf(stderr, "in loop t = %u\n", t);
 
         if(debug == 1){
             fprintf(stderr, "Process%d begin loop %d/%f\n", myrank, t, params->TMax/params->deltaT);
@@ -624,6 +644,8 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
                 vNext[i][ySize+1] = params->A * sin(2 * M_PI * params->f * t * params->deltaT);
             else
                 vNext[i][ySize+1] = params->A * sin(2 * M_PI * params->f * t * params->deltaT) * exp(- t * params->deltaT / 500);
+
+            //fprintf(stderr, "process %d vnext = %lf", myrank, vNext[i][ySize + 1]);
         }
         if(debug == 1)
             fprintf(stderr, "Process %d before v loop \n", myrank);
@@ -653,6 +675,22 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             printf("vNext\n");
             printDoubleMatrix(vNext, size_X+1, ySize + 2,myrank);
         }
+
+        /*
+        printf("\n\n\n*************Process %d *******************\n\n\n\n", myrank);
+        printf("etaCurr\n");
+        printDoubleMatrix(etaCurr, size_X, ySize + 1, myrank);
+        printf("etaNext\n");
+        printDoubleMatrix(etaNext, size_X, ySize + 1,myrank);
+        printf("uCurr\n");
+        printDoubleMatrix(uCurr, size_X_u, ySize + 1,myrank);
+        printf("uNext\n");
+        printDoubleMatrix(uNext, size_X_u, ySize + 1,myrank);
+        printf("vCurr\n");
+        printDoubleMatrix(vCurr, size_X, ySize + 2,myrank);
+        printf("vNext\n");
+        printDoubleMatrix(vNext, size_X, ySize + 2,myrank);
+        */
 
 
         // Process 0 saves arrays to disk
