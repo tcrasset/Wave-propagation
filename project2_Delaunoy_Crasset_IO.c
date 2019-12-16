@@ -269,7 +269,7 @@ void getFileNames(char* etaName, char* uName, char* vName, char* dir_name, unsig
 }
 
 int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xSize, 
-    unsigned int ySize, unsigned int iteration, Parameters* params, int nbproc, char* nbthreads) {
+    unsigned int ySize, unsigned int iteration, Parameters* params, int nbproc, int nbthreads) {
 
     static int createDirectory = 0;
     static char full_path[MAX_FILENAME_SIZE];
@@ -289,7 +289,7 @@ int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xS
         
         // Create output directory
         char new_dir[MAX_FILENAME_SIZE];
-        snprintf(new_dir, MAX_FILENAME_SIZE, "/Results/matrices_of_%s_%d_%s/", parameter_file, nbproc, nbthreads);
+        snprintf(new_dir, MAX_FILENAME_SIZE, "/Results/matrices_of_%s_%d_%d/", parameter_file, nbproc, nbthreads);
         strncpy(full_path, current_dir, MAX_FILENAME_SIZE);
         strncat(full_path, new_dir, MAX_FILENAME_SIZE);
 
@@ -298,6 +298,7 @@ int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xS
             status = mkdir(full_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             if (status == -1) {
                 fprintf(stderr, "Error in saveToDisk = %s\n" , strerror(errno));
+                fprintf(stderr, "Attempted to create: %s\n" , full_path);
                 MPI_Finalize();
                 exit(EXIT_FAILURE);
             }

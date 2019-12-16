@@ -27,4 +27,4 @@ serverPath=/home/ulg/info0939/tcrasset/Project2
 # Output filename header
 echo "Scheme,Process number,Number of processes,Number of threads,Time per process,DeltaX,DeltaY,DeltaT,s,r_threshold" > $output_filename
 
-mpirun -np $SLURM_NTASKS waves $serverPath/Parameters/$parameter_file $serverPath/Maps/sriLanka.dat 0 0 0 >> $output_filename
+mpirun -np $SLURM_NTASKS $serverPath/waves $serverPath/Parameters/$parameter_file $serverPath/Maps/sriLanka.dat 0 0 0 >> $output_filename

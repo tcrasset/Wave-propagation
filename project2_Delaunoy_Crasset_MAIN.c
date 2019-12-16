@@ -324,7 +324,7 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
 
     if(myrank == 0){
         char* openMP_nbthreads = getenv("OMP_NUM_THREADS");
-        saveToDisk(etaTotal, uTotal, vTotal, xSize, ySize, iteration, params, nbproc, openMP_nbthreads);
+        saveToDisk(etaTotal, uTotal, vTotal, xSize, ySize, iteration, params, nbproc, atoi(openMP_nbthreads));
     }
 
     free(etaTotal);
@@ -480,7 +480,6 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     //     printf("apres h\n");
     // }
 
-<<<<<<< HEAD
     #pragma omp parallel default(shared)
     {
         for(int i = 0; i < size_X; i++){
@@ -502,38 +501,15 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         }
     }
 
-=======
-
-    for(int i = 0; i < size_X; i++){
-        for(int j = 0; j < ySize + 1; j++){
-            etaCurr[i][j] = 0;
-        }
-    }
-
-    for(int i = 0; i < size_X_u; i++){
-        for(int j = 0; j < ySize + 1; j++){
-            uCurr[i][j] = 0;
-        }
-    }
-
-    for(int i = 0; i < size_X; i++){
-        for(int j = 0; j < ySize + 2; j++)
-            vCurr[i][j] = 0;
-    }
->>>>>>> master
 
     double* uReceived = malloc((ySize + 1) * sizeof(double));
     double* etaReceived = malloc((ySize + 1) * sizeof(double));
 
     for(unsigned int t = 1; t <= params->TMax/params->deltaT; t++){
 
-<<<<<<< HEAD
-        if(debug == 0){
-=======
         //fprintf(stderr, "in loop t = %u\n", t);
 
         if(debug == 1){
->>>>>>> master
             fprintf(stderr, "Process%d begin loop %d/%f\n", myrank, t, params->TMax/params->deltaT);
         }
 
@@ -646,7 +622,6 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             }
             else if(myrank == nbproc-1){
                 for(int j = 0; j < ySize + 1; j++){
-<<<<<<< HEAD
                     uNext[0][j] = (-params->g * (etaCurr[0][j] - etaReceived[j]) / params->deltaX
                                 -params->gamma * uCurr[0][j]) * params->deltaT + uCurr[0][j];
                 }
@@ -656,16 +631,6 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
                         uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
                                                         -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
                     }
-=======
-                    /*
-                    fprintf(stderr, "eta curr = %lf\n", etaCurr[i][j]);
-                    fprintf(stderr, "eta curr -1 = %lf\n", etaCurr[i-1][j]);
-                    fprintf(stderr, "eta curr = %lf\n", uCurr[i][j]);
-                    */
-                    uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
-                                   -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
-                    //fprintf(stderr, "uNext = %lf\n", uNext[i][j]);
->>>>>>> master
                 }
             }
 

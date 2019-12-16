@@ -17,12 +17,13 @@ read -r -p "Did you do all of the above ? [y/N]" response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
 then
     
+    cd $serverPath
     module load openmpi
-    mpicc -g project2_Delaunoy_Crasset*.c -std=c99 -lm -fopenmp -o waves
+    mpicc -g $serverPath/project2_Delaunoy_Crasset*.c -std=c99 -lm -fopenmp -o $serverPath/waves
 
     echo "Launching multiprocess_computation.sh"
 
-    for nb_processes in 1 2 4 8 16 32 64
+    for nb_processes in 1 2 4 8 #16 32 64
     do
         for nb_threads in 1 2 4 8
         do
