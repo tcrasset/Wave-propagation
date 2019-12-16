@@ -30,7 +30,7 @@ void printDoubleMatrix(double** matrix, int x, int y, int process_rank) {
 void printLinearArray(double* array, int x, int y) {
     for (int i = 0; i < x * y; i++) {
         fprintf(stderr, "%lf ", array[i]);
-        if (i != 0 && (i + 1) % (x) == 0) {
+        if (i != 0 && (i + 1) % (y) == 0) {
             fprintf(stderr, "\n");
         }
     }
@@ -128,7 +128,7 @@ Parameters* readParameterFile(const char* filename) {
     fscanf(fp, "%lf", &params->deltaX);
     fscanf(fp, "%lf", &params->deltaY);
     fscanf(fp, "%lf", &params->deltaT);
-    fscanf(fp, "%u", &params->TMax);
+    fscanf(fp, "%lf", &params->TMax);
     fscanf(fp, "%lf", &params->A);
     fscanf(fp, "%lf", &params->f);
     fscanf(fp, "%u", &params->S);
@@ -267,7 +267,7 @@ void getFileNames(char* etaName, char* uName, char* vName, char* dir_name, unsig
     strncat(vName, ".dat", MAX_FILE_SIZE);
 }
 
-int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int size_X, unsigned int size_X_u, unsigned int ySize, unsigned int iteration, Parameters* params) {
+int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xSize, unsigned int ySize, unsigned int iteration, Parameters* params) {
     static int createDirectory = 0;
     static char full_path[MAX_FILE_SIZE];
     int status = 0;
@@ -308,8 +308,8 @@ int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int si
     char vFilename[MAX_FILE_SIZE];
     getFileNames(etaFilename, uFilename, vFilename, full_path, iteration);
 
-    writeResultArray(etaFilename, size_X, ySize + 1, etaTotal, 0);
-    writeResultArray(uFilename, size_X_u, ySize + 2, uTotal, 0);
-    writeResultArray(vFilename, size_X_u, ySize + 1, vTotal, 0);
+    writeResultArray(etaFilename, xSize + 1, ySize + 1, etaTotal, 0);
+    writeResultArray(uFilename, xSize + 2, ySize + 1, uTotal, 0);
+    writeResultArray(vFilename, xSize + 1, ySize + 2, vTotal, 0);
 
 }
