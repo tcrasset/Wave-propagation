@@ -10,7 +10,7 @@ typedef struct Parameters {
     double deltaX;
     double deltaY;
     double deltaT;
-    unsigned int TMax;
+    double TMax;
     double A;
     double f;
     unsigned int S;
