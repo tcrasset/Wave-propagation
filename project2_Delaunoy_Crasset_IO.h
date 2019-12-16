@@ -11,5 +11,7 @@ void writeResultArray(char* filename, int xsize, int ysize,double* array, int de
 void writeTestMap(char* filename, int debug);
 void printGrid(Map* map);
 void getFileNames(char* etaName, char* uName, char* vName, char* dir_name, unsigned int iteration);
-int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xSize, unsigned int ySize, unsigned int iteration, Parameters* params);
+int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xSize, 
+    unsigned int ySize, unsigned int iteration, Parameters* params, int nbproc, char* nbthreads);
+    
 #endif  // IO_H_

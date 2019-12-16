@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <mpi.h>
+
 #include "project2_Delaunoy_Crasset_MAIN.h"
 
 void printDoubleMatrix(double** matrix, int x, int y, int process_rank) {
@@ -267,7 +268,9 @@ void getFileNames(char* etaName, char* uName, char* vName, char* dir_name, unsig
     strncat(vName, ".dat", MAX_FILENAME_SIZE);
 }
 
-int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xSize, unsigned int ySize, unsigned int iteration, Parameters* params) {
+int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xSize, 
+    unsigned int ySize, unsigned int iteration, Parameters* params, int nbproc, char* nbthreads) {
+
     static int createDirectory = 0;
     static char full_path[MAX_FILENAME_SIZE];
     int status = 0;
@@ -286,7 +289,7 @@ int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xS
         
         // Create output directory
         char new_dir[MAX_FILENAME_SIZE];
-        snprintf(new_dir, MAX_FILENAME_SIZE, "/Results/matrices_of_%s/", parameter_file);
+        snprintf(new_dir, MAX_FILENAME_SIZE, "/Results/matrices_of_%s_%d_%s/", parameter_file, nbproc, nbthreads);
         strncpy(full_path, current_dir, MAX_FILENAME_SIZE);
         strncat(full_path, new_dir, MAX_FILENAME_SIZE);
 
