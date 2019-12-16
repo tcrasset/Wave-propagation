@@ -323,7 +323,7 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
     }
 
     if(myrank == 0){
-        saveToDisk(etaTotal, uTotal, vTotal, size_X, size_X_u, ySize, iteration, params);
+        saveToDisk(etaTotal, uTotal, vTotal, xSize, ySize, iteration, params);
     }
 
     free(etaTotal);
@@ -364,6 +364,12 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     int startval_X_h;
     int endval_X_h;
     get_array_sizes(myrank, nbproc, xSize, &size_X, &size_X_u, &size_X_h, &startval_X_h, &endval_X_h);
+
+    /*
+    fprintf(stderr, "process %d size_X = %d\n", myrank, size_X);
+    fprintf(stderr, "process %d size_X_u = %d\n", myrank, size_X_u);
+    fprintf(stderr, "process %d size_X_h = %d\n", myrank, size_X_h);
+    */
 
     if(debug == 1){
         fprintf(stderr, "process %d size_X = %d\n", myrank, size_X);
@@ -608,8 +614,14 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             }
             for(int i = 1; i < size_X_u-1; i++){ 
                 for(int j = 0; j < ySize + 1; j++){
+                    /*
+                    fprintf(stderr, "eta curr = %lf\n", etaCurr[i][j]);
+                    fprintf(stderr, "eta curr -1 = %lf\n", etaCurr[i-1][j]);
+                    fprintf(stderr, "eta curr = %lf\n", uCurr[i][j]);
+                    */
                     uNext[i][j] = (-params->g * (etaCurr[i][j] - etaCurr[i-1][j]) / params->deltaX
-                                                    -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
+                                   -params->gamma * uCurr[i][j]) * params->deltaT + uCurr[i][j];
+                    //fprintf(stderr, "uNext = %lf\n", uNext[i][j]);
                 }
             }
         }
@@ -715,7 +727,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         vNext = tmp;
 
         if(debug == 1){
-            fprintf(stderr, "Process%d end loop %d/%d\n", myrank, t, params->TMax);
+            fprintf(stderr, "Process%d end loop %d/%lf\n", myrank, t, params->TMax);
         }
     }   
 
@@ -730,6 +742,11 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     
     free(uReceived);
     free(etaReceived);
+
+    /*
+    params->deltaX = tmp_deltaX;
+    params->deltaY = tmp_deltaY;
+    */
 
     return 0;
 }
