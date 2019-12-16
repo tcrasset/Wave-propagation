@@ -1,7 +1,7 @@
 #!/bin/bash
 # Submission script for NIC4
 #SBATCH --job-name=TestRun
-#SBATCH --time=00:15:00 # hh:mm:ss
+#SBATCH --time=08:00:00 # hh:mm:ss
 #
 #SBATCH --mem-per-cpu=16000 # megabytes
 #SBATCH --partition=defq
@@ -28,4 +28,4 @@ output_filename="$serverPath/Results/statistics_for_configuration_$SLURM_NTASKS-
 
 # Output filename header
 echo "Scheme,Process number,Number of processes,Number of threads,Time per process,DeltaX,DeltaY,DeltaT,s,r_threshold" > $output_filename
-mpirun -np $SLURM_NTASKS waves $serverPath/Parameters/$parameter_file $serverPath/Maps/sriLanka.dat 0 0 0 >> $output_filename
+mpirun -np $SLURM_NTASKS $serverPath/waves $serverPath/Parameters/$parameter_file $serverPath/Maps/sriLanka.dat 0 0 0 >> $output_filename
