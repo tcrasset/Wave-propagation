@@ -494,7 +494,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     double* uReceived = malloc((ySize + 1) * sizeof(double));
     double* etaReceived = malloc((ySize + 1) * sizeof(double));
 
-    for(unsigned int t = 1; t <= params->TMax; t++){
+    for(unsigned int t = 1; t <= params->TMax/params->deltaT; t++){
 
         //fprintf(stderr, "in loop t = %u\n", t);
 
