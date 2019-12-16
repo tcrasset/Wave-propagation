@@ -1,7 +1,7 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-#define MAX_FILE_SIZE 500
+#define MAX_FILENAME_SIZE 500
 
 typedef struct Parameters {
     const char* filename;
