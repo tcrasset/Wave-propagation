@@ -9,9 +9,16 @@ serverPath=/home/ulg/info0939/tcrasset/Project2
 
 ssh-add $rsaPath
 
-# Cycles through a list of filenames in filesToCopyToServer.txt
-# and copies them to the server
-while IFS="" read -r filename || [ -n "$filename" ]
-do
-scp -i $rsaPath $homePath/$filename $user@$server:$serverPath
-done < filesToCopyToServer.txt
+scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_MAIN.c $user@$server:$serverPath
+scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_MAIN.h $user@$server:$serverPath
+scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_IO.c $user@$server:$serverPath
+scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_IO.h $user@$server:$serverPath
+
+scp -i $rsaPath $homePath/project2_launch.sh $user@$server:$serverPath
+scp -i $rsaPath $homePath/multiprocess_computation.sh $user@$server:$serverPath
+
+scp -i $rsaPath $homePath/namesOfParameterFiles.txt $user@$server:$serverPath
+
+scp -i $rsaPath $homePath/Parameters/base_params_refraction.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Parameters/base_params_sriLanka.txt $user@$server:$serverPath/Parameters
+
