@@ -10,7 +10,7 @@ function v = seeResults(field,filename, step)
     for b = 1:1:M
       v(b,a) = data((b-1) * N + a);
     end
-  end
+    end1
   figure1 = figure('visible','on');
   imagesc(v);
   set(gca,'YDir','normal');
