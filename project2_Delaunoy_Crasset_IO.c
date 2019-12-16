@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <mpi.h>
+
 #include "project2_Delaunoy_Crasset_MAIN.h"
 
 void printDoubleMatrix(double** matrix, int x, int y, int process_rank) {
@@ -30,7 +31,7 @@ void printDoubleMatrix(double** matrix, int x, int y, int process_rank) {
 void printLinearArray(double* array, int x, int y) {
     for (int i = 0; i < x * y; i++) {
         fprintf(stderr, "%lf ", array[i]);
-        if (i != 0 && (i + 1) % (x) == 0) {
+        if (i != 0 && (i + 1) % (y) == 0) {
             fprintf(stderr, "\n");
         }
     }
@@ -128,7 +129,7 @@ Parameters* readParameterFile(const char* filename) {
     fscanf(fp, "%lf", &params->deltaX);
     fscanf(fp, "%lf", &params->deltaY);
     fscanf(fp, "%lf", &params->deltaT);
-    fscanf(fp, "%u", &params->TMax);
+    fscanf(fp, "%lf", &params->TMax);
     fscanf(fp, "%lf", &params->A);
     fscanf(fp, "%lf", &params->f);
     fscanf(fp, "%u", &params->S);
@@ -248,28 +249,30 @@ void getFileNames(char* etaName, char* uName, char* vName, char* dir_name, unsig
     char* uPrefix = "u";
     char* vPrefix = "v";
 
-    char file_suffix[MAX_FILE_SIZE];
-    snprintf(file_suffix, MAX_FILE_SIZE, "_%u", iteration);
+    char file_suffix[MAX_FILENAME_SIZE];
+    snprintf(file_suffix, MAX_FILENAME_SIZE, "_%u", iteration);
 
-    strncpy(etaName, dir_name, MAX_FILE_SIZE);
-    strncat(etaName, etaPrefix, MAX_FILE_SIZE);
-    strncat(etaName, file_suffix, MAX_FILE_SIZE);
-    strncat(etaName, ".dat", MAX_FILE_SIZE);
+    strncpy(etaName, dir_name, MAX_FILENAME_SIZE);
+    strncat(etaName, etaPrefix, MAX_FILENAME_SIZE);
+    strncat(etaName, file_suffix, MAX_FILENAME_SIZE);
+    strncat(etaName, ".dat", MAX_FILENAME_SIZE);
 
-    strncpy(uName, dir_name, MAX_FILE_SIZE);
-    strncat(uName, uPrefix, MAX_FILE_SIZE);
-    strncat(uName, file_suffix, MAX_FILE_SIZE);
-    strncat(uName, ".dat", MAX_FILE_SIZE);
+    strncpy(uName, dir_name, MAX_FILENAME_SIZE);
+    strncat(uName, uPrefix, MAX_FILENAME_SIZE);
+    strncat(uName, file_suffix, MAX_FILENAME_SIZE);
+    strncat(uName, ".dat", MAX_FILENAME_SIZE);
 
-    strncpy(vName, dir_name, MAX_FILE_SIZE);
-    strncat(vName, vPrefix, MAX_FILE_SIZE);
-    strncat(vName, file_suffix, MAX_FILE_SIZE);
-    strncat(vName, ".dat", MAX_FILE_SIZE);
+    strncpy(vName, dir_name, MAX_FILENAME_SIZE);
+    strncat(vName, vPrefix, MAX_FILENAME_SIZE);
+    strncat(vName, file_suffix, MAX_FILENAME_SIZE);
+    strncat(vName, ".dat", MAX_FILENAME_SIZE);
 }
 
-int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int size_X, unsigned int size_X_u, unsigned int ySize, unsigned int iteration, Parameters* params) {
+int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xSize, 
+    unsigned int ySize, unsigned int iteration, Parameters* params, int nbproc, char* nbthreads) {
+
     static int createDirectory = 0;
-    static char full_path[MAX_FILE_SIZE];
+    static char full_path[MAX_FILENAME_SIZE];
     int status = 0;
 
     // Attempt creating a directory when calling this function for the first time
@@ -277,18 +280,18 @@ int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int si
         createDirectory = 1;
 
         //Get current working directory
-        char current_dir[MAX_FILE_SIZE];
-        getcwd(current_dir, MAX_FILE_SIZE);
+        char current_dir[MAX_FILENAME_SIZE];
+        getcwd(current_dir, MAX_FILENAME_SIZE);
 
         // Get parameter file and remove '.txt' extension
         char* parameter_file = basename((char*)params->filename);
         parameter_file[strlen(parameter_file)-4] = 0; 
         
         // Create output directory
-        char new_dir[MAX_FILE_SIZE];
-        snprintf(new_dir, MAX_FILE_SIZE, "/Results/matrices_of_%s/", parameter_file);
-        strncpy(full_path, current_dir, MAX_FILE_SIZE);
-        strncat(full_path, new_dir, MAX_FILE_SIZE);
+        char new_dir[MAX_FILENAME_SIZE];
+        snprintf(new_dir, MAX_FILENAME_SIZE, "/Results/matrices_of_%s_%d_%s/", parameter_file, nbproc, nbthreads);
+        strncpy(full_path, current_dir, MAX_FILENAME_SIZE);
+        strncat(full_path, new_dir, MAX_FILENAME_SIZE);
 
         // Check if file exists, if not, create it.
         if(access(full_path, F_OK) == -1) { 
@@ -303,13 +306,13 @@ int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int si
     }
     
     // Create file names
-    char etaFilename[MAX_FILE_SIZE];
-    char uFilename[MAX_FILE_SIZE];
-    char vFilename[MAX_FILE_SIZE];
+    char etaFilename[MAX_FILENAME_SIZE];
+    char uFilename[MAX_FILENAME_SIZE];
+    char vFilename[MAX_FILENAME_SIZE];
     getFileNames(etaFilename, uFilename, vFilename, full_path, iteration);
 
-    writeResultArray(etaFilename, size_X, ySize + 1, etaTotal, 0);
-    writeResultArray(uFilename, size_X_u, ySize + 2, uTotal, 0);
-    writeResultArray(vFilename, size_X_u, ySize + 1, vTotal, 0);
+    writeResultArray(etaFilename, xSize + 1, ySize + 1, etaTotal, 0);
+    writeResultArray(uFilename, xSize + 2, ySize + 1, uTotal, 0);
+    writeResultArray(vFilename, xSize + 1, ySize + 2, vTotal, 0);
 
 }
