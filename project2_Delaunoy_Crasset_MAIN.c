@@ -323,7 +323,8 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
     }
 
     if(myrank == 0){
-        saveToDisk(etaTotal, uTotal, vTotal, xSize, ySize, iteration, params);
+        char* openMP_nbthreads = getenv("OMP_NUM_THREADS");
+        saveToDisk(etaTotal, uTotal, vTotal, xSize, ySize, iteration, params, nbproc, openMP_nbthreads);
     }
 
     free(etaTotal);
@@ -859,7 +860,7 @@ int main(int argc, char* argv[]) {
     double executionTime = endTime - startTime;
     char* openMP_nbthreads = getenv("OMP_NUM_THREADS");
 
-    // Print statistics to standard output
+    // Print statistics to standard output (for later analysis)
     fprintf(stdout,"%d,%d,%d,%s,%lf,%lf,%lf,%lf,%u,%lf\n", scheme, myrank, nbproc, \
                 openMP_nbthreads, executionTime, params->deltaX, params->deltaY, \
                 params->deltaT, params->s, params->r_threshold);
