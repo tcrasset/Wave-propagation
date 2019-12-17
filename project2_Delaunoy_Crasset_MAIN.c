@@ -213,7 +213,7 @@ void get_array_sizes(int rank, int nbproc, int xSize, int* size_X, int* size_X_u
 
 
 
-int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize,  int debug, unsigned int iteration, Parameters* params){
+void gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize,  int debug, unsigned int iteration, Parameters* params){
 
     int nbproc, myrank;
     MPI_Comm_size(MPI_COMM_WORLD, &nbproc);
@@ -222,6 +222,9 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
     int size_X, size_X_u, size_X_h, startval_X_h, endval_X_h;
     get_array_sizes(myrank, nbproc, xSize, &size_X, &size_X_u, &size_X_h, &startval_X_h, &endval_X_h);
 
+    double* etaTotal;
+    double* uTotal;
+    double* vTotal;
 
     double* etaPartial = transformMatrixToArray(eta, size_X, ySize +1);
     double* uPartial = transformMatrixToArray(u, size_X_u, ySize +1);
@@ -244,88 +247,91 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
         fprintf(stderr, "process %d vPartial = %lf\n", myrank, vPartial[size_X * (ySize + 2) - 1]);
         fprintf(stderr, "process %d end test vPartial\n", myrank);
     }
-    int tmp_size_X;
-    int tmp_size_X_u;
-    int tmp_size_X_h;
-    int tmp_startval_X_h;
-    int tmp_endval_X_h;
 
-    int* recvcounts_eta = malloc(nbproc * sizeof(int));
-    int* recvcounts_u = malloc(nbproc * sizeof(int));
-    int* recvcounts_v = malloc(nbproc * sizeof(int));
-    int* disp_eta = malloc(nbproc * sizeof(int));
-    int* disp_u = malloc(nbproc * sizeof(int));
-    int* disp_v = malloc(nbproc * sizeof(int));
+    if(nbproc != 1){
 
-    if(!recvcounts_eta || !recvcounts_u || !recvcounts_v || !disp_eta || !disp_u || !disp_v){
-        fprintf(stderr, "error malloc recvcounts\n");
-        MPI_Finalize();
-        exit(-1);
-    }
+        int tmp_size_X;
+        int tmp_size_X_u;
+        int tmp_size_X_h;
+        int tmp_startval_X_h;
+        int tmp_endval_X_h;
 
-    for(int i = 0; i < nbproc; i++){
-        get_array_sizes(i, nbproc, xSize, &tmp_size_X, &tmp_size_X_u, &tmp_size_X_h, &tmp_startval_X_h, &tmp_endval_X_h);
-        recvcounts_eta[i] = tmp_size_X * (ySize + 1);
-        recvcounts_u[i] = tmp_size_X_u * (ySize + 1);
-        recvcounts_v[i] = tmp_size_X * (ySize + 2);
+        int* recvcounts_eta = malloc(nbproc * sizeof(int));
+        int* recvcounts_u = malloc(nbproc * sizeof(int));
+        int* recvcounts_v = malloc(nbproc * sizeof(int));
+        int* disp_eta = malloc(nbproc * sizeof(int));
+        int* disp_u = malloc(nbproc * sizeof(int));
+        int* disp_v = malloc(nbproc * sizeof(int));
 
-        if(i == 0){
-            disp_eta[0] = 0;
-            disp_u[0] = 0;
-            disp_v[0] = 0;
+        if(!recvcounts_eta || !recvcounts_u || !recvcounts_v || !disp_eta || !disp_u || !disp_v){
+            fprintf(stderr, "error malloc recvcounts\n");
+            MPI_Finalize();
+            exit(-1);
         }
-        if (i < nbproc - 1){
-            disp_eta[i + 1] = disp_eta[i] + tmp_size_X * (ySize + 1);
-            disp_u[i + 1] = disp_u[i] + tmp_size_X_u * (ySize + 1);
-            disp_v[i + 1] = disp_v[i] + tmp_size_X * (ySize + 2);
+
+        for(int i = 0; i < nbproc; i++){
+            get_array_sizes(i, nbproc, xSize, &tmp_size_X, &tmp_size_X_u, &tmp_size_X_h, &tmp_startval_X_h, &tmp_endval_X_h);
+            recvcounts_eta[i] = tmp_size_X * (ySize + 1);
+            recvcounts_u[i] = tmp_size_X_u * (ySize + 1);
+            recvcounts_v[i] = tmp_size_X * (ySize + 2);
+
+            if(i == 0){
+                disp_eta[0] = 0;
+                disp_u[0] = 0;
+                disp_v[0] = 0;
+            }
+            if (i < nbproc - 1){
+                disp_eta[i + 1] = disp_eta[i] + tmp_size_X * (ySize + 1);
+                disp_u[i + 1] = disp_u[i] + tmp_size_X_u * (ySize + 1);
+                disp_v[i + 1] = disp_v[i] + tmp_size_X * (ySize + 2);
+            }
+        }
+
+        /*
+        for (int i = 0; i < nbproc; i++){
+            fprintf(stderr, "recvcount % d = %d \n", i, recvcounts_v[i]);
+            fprintf(stderr, "disp % d = %d \n", i, disp_v[i]);
+        }
+        */
+
+        etaTotal = malloc((xSize + 1) * (ySize  + 1)* sizeof(double));
+        uTotal = malloc((xSize + 2) * (ySize  + 1)* sizeof(double));
+        vTotal = malloc((xSize + 1) * (ySize  + 2)* sizeof(double));
+
+        MPI_Gatherv(etaPartial, (size_X) * (ySize + 1) , MPI_DOUBLE, etaTotal, recvcounts_eta, disp_eta, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gatherv(uPartial, (size_X_u) * (ySize + 1) , MPI_DOUBLE, uTotal, recvcounts_u, disp_u, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gatherv(vPartial, (size_X) * (ySize + 2) , MPI_DOUBLE, vTotal, recvcounts_v, disp_v, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        
+
+        free(etaPartial);
+        free(uPartial);
+        free(vPartial);
+        free(recvcounts_eta);
+        free(recvcounts_u);
+        free(recvcounts_v);
+        free(disp_eta);
+        free(disp_u);
+        free(disp_v);
+
+        if(debug == 1 && myrank == 0){
+            fprintf(stderr,"***********ETA TOTAL**************\n");
+            printLinearArray(etaTotal, xSize + 1, ySize +1);
+            fprintf(stderr,"***********U TOTAL**************\n");
+            printLinearArray(uTotal, xSize + 2, ySize +1);
+            fprintf(stderr,"***********V TOTAL**************\n");
+            printLinearArray(vTotal, xSize + 1, ySize +2);
+        }
+
+        if(myrank == 0){
+            char* openMP_nbthreads = getenv("OMP_NUM_THREADS");
+            saveToDisk(etaTotal, uTotal, vTotal, xSize, ySize, iteration, params, nbproc, atoi(openMP_nbthreads));
         }
     }
+    else{
+        etaTotal = transformMatrixToArray(eta, xSize + 1, ySize +1);
+        uTotal = transformMatrixToArray(u, xSize + 2, ySize +1);
+        vTotal= transformMatrixToArray(v, xSize + 1, ySize +2);
 
-    /*
-    for (int i = 0; i < nbproc; i++){
-        fprintf(stderr, "recvcount % d = %d \n", i, recvcounts_v[i]);
-        fprintf(stderr, "disp % d = %d \n", i, disp_v[i]);
-    }
-    */
-
-    double * etaTotal = malloc((xSize + 1) * (ySize  + 1)* sizeof(double));
-    double * uTotal = malloc((xSize + 2) * (ySize  + 1)* sizeof(double));
-    double * vTotal = malloc((xSize + 1) * (ySize  + 2)* sizeof(double)); // had to increase xsize by 1 to not get segfault
-    MPI_Gatherv(etaPartial, (size_X) * (ySize + 1) , MPI_DOUBLE, etaTotal, recvcounts_eta, disp_eta, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(uPartial, (size_X_u) * (ySize + 1) , MPI_DOUBLE, uTotal, recvcounts_u, disp_u, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(vPartial, (size_X) * (ySize + 2) , MPI_DOUBLE, vTotal, recvcounts_v, disp_v, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    free(etaPartial);
-    free(uPartial);
-    free(vPartial);
-    free(recvcounts_eta);
-    free(recvcounts_u);
-    free(recvcounts_v);
-    free(disp_eta);
-    free(disp_u);
-    free(disp_v);
-
-    /*
-    if(myrank == 0){
-        fprintf(stderr,"***********ETA TOTAL**************\n");
-        printLinearArray(etaTotal, xSize + 1, ySize +1);
-        fprintf(stderr,"***********U TOTAL**************\n");
-        printLinearArray(uTotal, xSize + 2, ySize +1);
-        fprintf(stderr,"***********V TOTAL**************\n");
-        printLinearArray(vTotal, xSize + 1, ySize +2);
-    }
-    */
-
-    if(debug == 1 && myrank == 0){
-        fprintf(stderr,"***********ETA TOTAL**************\n");
-        printLinearArray(etaTotal, xSize + 1, ySize +1);
-        fprintf(stderr,"***********U TOTAL**************\n");
-        printLinearArray(uTotal, xSize + 2, ySize +1);
-        fprintf(stderr,"***********V TOTAL**************\n");
-        printLinearArray(vTotal, xSize + 1, ySize +2);
-    }
-
-    if(myrank == 0){
         char* openMP_nbthreads = getenv("OMP_NUM_THREADS");
         saveToDisk(etaTotal, uTotal, vTotal, xSize, ySize, iteration, params, nbproc, openMP_nbthreads);
     }
