@@ -23,10 +23,12 @@ then
 
     echo "Launching multiprocess_computation.sh"
 
-    for nb_processes in 1 2 4 8 #16 32 64
+    for nb_processes in 2 4 6 8
     do
         for nb_threads in 1 2 4 8
         do
+            # let CPU_MEM="$MAX_MEM_PER_NODE/$nb_processes/$nb_threads"
+            # CPU_MEM="${CPU_MEM}G"
             echo "Submitting job with $nb_processes processes and $nb_threads threads"
             sbatch --ntasks=$nb_processes --cpus-per-task=$nb_threads $serverPath/Scripts/test_computing_configuration.sh
         done
