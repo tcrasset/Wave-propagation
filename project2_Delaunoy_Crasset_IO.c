@@ -187,7 +187,7 @@ void writeResultArray(char* filename, int xsize, int ysize, double* array, int d
 
     for (int row = ysize - 1; row >= 0; row--) {
         for (int col = 0; col < xsize; col++) {
-            int index = row * ysize + col;
+            int index = row * xsize + col;
             if (debug == 1) {
                 printf("%lf \n", array[index]);
             }
