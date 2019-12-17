@@ -351,13 +351,15 @@ void gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySiz
 
 int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, double*** v, int debug, int debug_rank){
     
-    // int i = 0;
-    // char hostname[256];
-    // gethostname(hostname, sizeof(hostname));
-    // printf("PID %d on %s ready for attach\n", getpid(), hostname);
-    // fflush(stderr);
-    // while (0 == i)
-    // sleep(1);
+    if(debug == 2){
+        int i = 0;
+        char hostname[256];
+        gethostname(hostname, sizeof(hostname));
+        printf("PID %d on %s ready for attach\n", getpid(), hostname);
+        fflush(stderr);
+        while (0 == i)
+        sleep(1);
+    }
 
     assert(map);
     assert(params);
