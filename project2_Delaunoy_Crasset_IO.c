@@ -21,8 +21,8 @@ void printDoubleMatrix(double** matrix, int x, int y, int process_rank) {
 
     for (int i = 0; i < x; i++) {
         for (int j = 0; j < y; j++) {
-            fprintf(stderr, "\tP%d\t", process_rank);
-            fprintf(stderr, "%lf ", matrix[i][j]);
+            // fprintf(stderr, "\tP%d\t", process_rank);
+            fprintf(stderr, "%.2lf  ", matrix[i][j]);
         }
         fprintf(stderr, "\n");
     }
@@ -224,7 +224,7 @@ void writeTestMap(char* filename, int debug) {
 
     for (int row = 0; row < Y; row++) {
         for (int col = 0; col < X; col++) {
-            double value = (double)(Y - row - 1) * X + col;
+            double value = (double) ((double)((Y - row - 1) * X + col)/100);
             if (debug == 1)
                 printf("%lf \n", value);
             fwrite(&value, sizeof(value), 1, fp);
