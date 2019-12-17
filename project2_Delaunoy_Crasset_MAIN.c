@@ -295,6 +295,9 @@ int gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize
     MPI_Gatherv(uPartial, (size_X_u) * (ySize + 1) , MPI_DOUBLE, uTotal, recvcounts_u, disp_u, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Gatherv(vPartial, (size_X) * (ySize + 2) , MPI_DOUBLE, vTotal, recvcounts_v, disp_v, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
+    free(etaPartial);
+    free(uPartial);
+    free(vPartial);
     free(recvcounts_eta);
     free(recvcounts_u);
     free(recvcounts_v);
