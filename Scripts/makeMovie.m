@@ -1,5 +1,6 @@
 function makeMovie(field, filename, start, step, max)
-  mov = VideoWriter('movie.avi');
+  videoName = sprintf('movie_%s_%s', field, filename);
+  mov = VideoWriter(videoName);
   open(mov);
   for i = start:step:max
     i
