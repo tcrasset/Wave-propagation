@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <mpi.h>
 
 #include "project2_Delaunoy_Crasset_SPARSE.h"
 
@@ -73,4 +74,34 @@ void sparseInsertElement(SparseMatrix* mat, unsigned int i, unsigned int j, doub
 	mat->JA[mat->currNbElement] = j;
 
 	mat->currNbElement++;
+}
+
+double MPIDotProduct(double* x, double* y, unsigned int size, unsigned int startIndex, unsigned int endIndex, int myrank, int nbproc){
+    double myResult = 0.0;
+    for(unsigned int i = startIndex; i <= endIndex; i++){
+        myResult += x[i] * y[i];
+    }
+
+    double totResult;
+
+    MPI_Allreduce(&myResult, &totResult, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+    return totResult;
+}
+
+void MPIMatVecMul(SparseMatrix* A, double* x, double* tmpBuff, double* result, unsigned int startIndex, unsigned int endIndex, int myrank, int nbproc, int* recvcounts, int* displs){
+
+    for(unsigned int i = startIndex ; i <= endIndex; i++){
+        tmpBuff[i-startIndex] = sparseDotProduct(A, i, x);
+    }
+
+    MPI_Allgatherv(tmpBuff, (endIndex - startIndex + 1), MPI_DOUBLE, result, recvcounts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
+}
+
+void MPIMatSparseVecMul(SparseMatrix* A, SparseMatrix* vec, unsigned int vecLine, double* tmpBuff, double* result, unsigned int size, unsigned int startIndex, unsigned int endIndex, int myrank, int nbproc, int* recvcounts, int* displs){
+	
+}
+
+void MPISelfMatMul(SparseMatrix* A, SparseMatrix* result, unsigned int size, unsigned int startIndex, unsigned int endIndex, int myrank, int nbproc, int* recvcounts, int* displs){
+	
 }
