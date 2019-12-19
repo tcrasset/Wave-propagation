@@ -5,7 +5,6 @@ void printDoubleMatrix(double** matrix, int x, int y, int process_rank);
 void printLinearArray(double* array, int x, int y);
 Map* readMapFile(const char* filename, int debug);
 Parameters* readParameterFile(const char* filename);
-void printUsefulMapInformation(Map* map);
 void writeResultMatrix(char* filename, int xsize, int ysize,double** matrix, int debug);
 void writeResultArray(char* filename, int xsize, int ysize,double* array, int debug);
 void writeTestMap(char* filename, int debug);
