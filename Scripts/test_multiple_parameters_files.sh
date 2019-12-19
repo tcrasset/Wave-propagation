@@ -16,13 +16,15 @@ printf "Did you change the files that you need to run ? \n\n"
 printf "Did you update 'namesOfParameterFiles' ? \n\n"
 
 
+
 read -r -p "Did you do all of the above ? [y/N]" response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
 then
     
     # Load modules and compile
+    cd $serverPath
     module load openmpi
-    mpicc -g project2_Delaunoy_Crasset*.c -std=c99 -lm -fopenmp -o waves
+    mpicc -g $serverPath/project2_Delaunoy_Crasset*.c -std=c99 -lm -fopenmp -o $serverPath/waves
 
     # Cycle through parameter filenames in namesOfParameterFiles.txt
     # run a computation with it
