@@ -12,8 +12,9 @@
 #include <errno.h>
 #include <mpi.h>
 
-#include "project2_Delaunoy_Crasset_MAIN.h"
+#include "project2_Delaunoy_Crasset_EXPLICIT.h"
 
+/*
 void printDoubleMatrix(double** matrix, int x, int y, int process_rank) {
     assert(x > 0);
     assert(y > 0);
@@ -27,7 +28,9 @@ void printDoubleMatrix(double** matrix, int x, int y, int process_rank) {
         fprintf(stderr, "\n");
     }
 }
+*/
 
+/*
 void printLinearArray(double* array, int x, int y) {
     for (int i = 0; i < x * y; i++) {
         fprintf(stderr, "%lf ", array[i]);
@@ -37,6 +40,7 @@ void printLinearArray(double* array, int x, int y) {
     }
     fprintf(stderr, "\n");
 }
+*/
 
 Map* readMapFile(const char* filename, int debug) {
     FILE* fp;
@@ -90,13 +94,10 @@ Map* readMapFile(const char* filename, int debug) {
     }
 
     // Read the bathymetry depth grid from the map file
-
     long long i = 0;
     fread(buffer, 8, 1, fp);
     for (int row = map->Y - 1; row >= 0; row--) {
         for (int col = 0; col < map->X; fread(buffer, 8, 1, fp), col++) {
-            if (debug == 1)
-                printf("(%d,%d)=%lf\n", col, row, *((double*)buffer));
             map->grid[col][row] = *((double*)buffer);
         }
     }
@@ -123,6 +124,7 @@ Parameters* readParameterFile(const char* filename) {
         MPI_Finalize();
         exit(EXIT_FAILURE);
     }
+
     params->filename = filename;
     fscanf(fp, "%lf", &params->g);
     fscanf(fp, "%lf", &params->gamma);
@@ -141,12 +143,7 @@ Parameters* readParameterFile(const char* filename) {
     return params;
 }
 
-void printUsefulMapInformation(Map* map) {
-    printf("X: %d Y: %d\n", map->X, map->Y);
-    printf("a : %lf, b : %lf \n", map->a, map->b);
-    printf("Sampling steps: dx = %lf, dy = %lf\n", map->dx, map->dy);
-}
-
+/*
 void writeResultMatrix(char* filename, int xsize, int ysize, double** matrix, int debug) {
     FILE* fp;
 
@@ -171,7 +168,7 @@ void writeResultMatrix(char* filename, int xsize, int ysize, double** matrix, in
 
     fclose(fp);
 }
-
+*/
 void writeResultArray(char* filename, int xsize, int ysize, double* array, int debug) {
     
     FILE* fp = fopen(filename, "wb");
@@ -188,9 +185,6 @@ void writeResultArray(char* filename, int xsize, int ysize, double* array, int d
     for (int row = ysize - 1; row >= 0; row--) {
         for (int col = 0; col < xsize; col++) {
             int index = col * ysize + row;
-            if (debug == 1) {
-                printf("%lf \n", array[index]);
-            }
             fwrite(&array[index], 8, 1, fp);
         }
     }
@@ -198,6 +192,7 @@ void writeResultArray(char* filename, int xsize, int ysize, double* array, int d
     fclose(fp);
 }
 
+/*
 void writeTestMap(char* filename, int debug) {
     FILE* fp;
 
@@ -233,7 +228,9 @@ void writeTestMap(char* filename, int debug) {
 
     fclose(fp);
 }
+*/
 
+/*
 void printGrid(Map* map) {
     assert(map);
     for (int i = 0; i < map->X; i++) {
@@ -243,6 +240,7 @@ void printGrid(Map* map) {
         printf("\n");
     }
 }
+*/
 
 void getFileNames(char* etaName, char* uName, char* vName, char* dir_name, unsigned int iteration) {
     char* etaPrefix = "eta";
