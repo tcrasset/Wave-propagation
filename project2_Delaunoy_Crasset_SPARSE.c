@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <mpi.h>
+#include <stdio.h>
 
 #include "project2_Delaunoy_Crasset_SPARSE.h"
 
@@ -54,6 +55,14 @@ void freeSparseMatrix(SparseMatrix* mat){
 	free(mat);
 }
 
+void printSparseMatrix(SparseMatrix* mat){
+	for(int i = 0; i < mat->currNbElement; i++){
+		int j = 0;
+		for(j = 0; j < mat->x + 1 && mat->IA[j] <= i; j++);
+		fprintf(stderr, "(%d, %d) = %lf\n", j-1, mat->JA[i], mat->A[i]);
+	}
+}
+
 double sparseDotProduct(SparseMatrix* mat, unsigned int row, double* vector){
 	double result = 0.0;
 
@@ -74,6 +83,14 @@ void sparseInsertElement(SparseMatrix* mat, unsigned int i, unsigned int j, doub
 	mat->JA[mat->currNbElement] = j;
 
 	mat->currNbElement++;
+}
+
+void resetSparseMatrix(SparseMatrix * mat){
+	mat->currNbElement = 0;
+
+	for(unsigned int i = 0; i < mat->x + 1; i++){
+		mat->IA[i] = 0;
+	}
 }
 
 double MPIDotProduct(double* x, double* y, unsigned int size, unsigned int startIndex, unsigned int endIndex, int myrank, int nbproc){
