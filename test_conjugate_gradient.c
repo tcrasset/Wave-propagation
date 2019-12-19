@@ -234,14 +234,15 @@ void test_set_system_matrix_elements(int argc, char* argv[]){
     		h[i][j] = i*7+j;
     }
 
-
-
     Parameters* params = malloc(sizeof(Parameters));
     params->deltaX = 5.0;
     params->deltaY = 10.0;
     params->deltaT = 0.1;
-    params->f = 1.0;
+    params->gamma = 1.6785;
+    params->f = 0.87368;
     params->s = 0;
+    params->g = 9.789;
+    params->A = 1;
 
     if(myrank == 0){
     	setSystemMatrixElements(A, b, x, 0, 7, 1, 1, h, params, 1);

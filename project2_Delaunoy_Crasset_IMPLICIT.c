@@ -530,17 +530,19 @@ void setSystemMatrixElements(SparseMatrix* A, double* b, double* result, unsigne
 
             sparseInsertElement(A, i, i, 1.0/params->deltaT);
 
-            sparseInsertElement(A, i, i + uBegin + ySize + 1, h[2*x+1][2*y]/params->deltaX);
             if(x == 0)
-                sparseInsertElement(A, i, i + uBegin, -h[0][2*y]/params->deltaX);
+                sparseInsertElement(A, i, uBegin + get_1d(x, y, ySize + 1), -h[0][2*y]/params->deltaX);
             else
-                sparseInsertElement(A, i, i + uBegin, -h[2*x-1][2*y]/params->deltaX);
+                sparseInsertElement(A, i, uBegin + get_1d(x, y, ySize + 1), -h[2*x-1][2*y]/params->deltaX);
 
-            sparseInsertElement(A, i, i + vBegin + 1, h[2*x][2*y+1]/params->deltaY);
+            sparseInsertElement(A, i, uBegin + get_1d(x + 1, y, ySize + 1), h[2*x+1][2*y]/params->deltaX);
+
             if(y == 0)
-                sparseInsertElement(A, i, i + uBegin, -h[2*x][0]/params->deltaY);
+                sparseInsertElement(A, i, vBegin + get_1d(x, y, ySize + 2), -h[2*x][0]/params->deltaY);
             else
-                sparseInsertElement(A, i, i + uBegin, -h[2*x][2*y-1]/params->deltaY);
+                sparseInsertElement(A, i, vBegin + get_1d(x, y, ySize + 2), -h[2*x][2*y-1]/params->deltaY);
+
+            sparseInsertElement(A, i, vBegin + get_1d(x, y + 1, ySize + 2), h[2*x][2*y+1]/params->deltaY);
 
         }
 
@@ -555,9 +557,9 @@ void setSystemMatrixElements(SparseMatrix* A, double* b, double* result, unsigne
 
             // In the middle
             else{
-                sparseInsertElement(A, i, i, 1.0/params->deltaT + params->gamma);
-                sparseInsertElement(A, i, get_1d(x, y, ySize + 1), params->g/params->deltaX);
                 sparseInsertElement(A, i, get_1d(x - 1, y, ySize + 1), -params->g/params->deltaX);
+                sparseInsertElement(A, i, get_1d(x, y, ySize + 1), params->g/params->deltaX);
+                sparseInsertElement(A, i, i, 1.0/params->deltaT + params->gamma);
             }
         }
 
@@ -571,9 +573,9 @@ void setSystemMatrixElements(SparseMatrix* A, double* b, double* result, unsigne
 
             // In the middle
             else{
-                sparseInsertElement(A, i, i, 1.0/params->deltaT + params->gamma);
-                sparseInsertElement(A, i, get_1d(x, y, ySize + 1), params->g/params->deltaY);
                 sparseInsertElement(A, i, get_1d(x, y - 1, ySize + 1), -params->g/params->deltaY);
+                sparseInsertElement(A, i, get_1d(x, y, ySize + 1), params->g/params->deltaY);
+                sparseInsertElement(A, i, i, 1.0/params->deltaT + params->gamma);
             }
         }
     }
