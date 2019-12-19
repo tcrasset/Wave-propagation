@@ -5,7 +5,7 @@ rsaPath=/home/tom/.ssh/id_rsa.ceci
 user=tcrasset
 server=nic4.segi.ulg.ac.be
 homePath=/home/tom/Documents/Uliege/Master2/HPC/Project2
-serverPath=/home/ulg/info0939/tcrasset/Project2/Test
+serverPath=/home/ulg/info0939/tcrasset/Project2
 ###############################################################
 
 ssh-add $rsaPath
