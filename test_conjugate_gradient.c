@@ -181,8 +181,6 @@ void test_mpi_conjugate(int argc, char* argv[]){
 		sparseInsertElement(A, 1, 1, -1);
 		sparseInsertElement(A, 1, 2, 3);
 		
-		
-
 		double* x = MPISparseConjugateGradient(A, b, 3, 2, 0.00001, nbproc, myrank, 0, 1, recvcounts, displs);
 		fprintf(stderr, "proc %d:\n x = %lf\n y = %lf\n z = %lf\n", myrank, x[0], x[1], x[2]);
     }
@@ -201,6 +199,85 @@ void test_mpi_conjugate(int argc, char* argv[]){
     //fprintf(stderr, "x = %lf\n y = %lf\n z = %lf\n", x[0], x[1], x[2]);
 }
 
+void test_set_system_matrix_elements(int argc, char* argv[]){
+	MPI_Init(&argc,&argv);
+
+    int nbproc, myrank;
+    MPI_Comm_size(MPI_COMM_WORLD, &nbproc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+
+    double* b = malloc(16 * sizeof(double));
+    SparseMatrix* A = createSparseMatrix(16, 16, 5*16);
+    sparseInsertElement(A, 0, 0, 999999);
+    sparseInsertElement(A, 8, 5, 999999);
+    sparseInsertElement(A, 1, 12, 999999);
+    sparseInsertElement(A, 15, 3, 999999);
+    sparseInsertElement(A, 3, 5, 999999);
+    sparseInsertElement(A, 8, 4, 999999);
+    sparseInsertElement(A, 9, 1, 999999);
+    sparseInsertElement(A, 7, 7, 999999);
+    sparseInsertElement(A, 10, 5, 999999);
+
+    double* x = malloc(16 * sizeof(double));
+
+    for(int i = 0; i < 16; i++){
+    	x[i] = i+1;
+    }
+
+    double** h = malloc(7*sizeof(double*));
+    for(int i = 0; i < 7; i++){
+    	h[i] = malloc(7*sizeof(double));
+    }
+
+    for(int i = 0; i < 7; i++){
+    	for(int j = 0; j < 7; j++)
+    		h[i][j] = i*7+j;
+    }
+
+
+
+    Parameters* params = malloc(sizeof(Parameters));
+    params->deltaX = 5.0;
+    params->deltaY = 10.0;
+    params->deltaT = 0.1;
+    params->f = 1.0;
+    params->s = 0;
+
+    if(myrank == 0){
+    	setSystemMatrixElements(A, b, x, 0, 7, 1, 1, h, params, 1);
+    	fprintf(stderr, "process 0\n");
+    	fprintf(stderr, "A:\n");
+    	printSparseMatrix(A);
+    	fprintf(stderr, "b:");
+    	for(int i = 0; i < 16; i++){
+    		fprintf(stderr, " %lf", b[i]);
+    	}
+    	fprintf(stderr, "\n");
+    }
+    if(myrank == 0){
+    	setSystemMatrixElements(A, b, x, 8, 15, 1, 1, h, params, 1);
+    	fprintf(stderr, "process 1\n");
+    	fprintf(stderr, "A:\n");
+    	printSparseMatrix(A);
+    	fprintf(stderr, "b:");
+    	for(int i = 0; i < 16; i++){
+    		fprintf(stderr, " %lf", b[i]);
+    	}
+    	fprintf(stderr, "\n");
+    }
+
+	MPI_Finalize();	
+}
+
+void test_print_sparse_matrix(){
+	SparseMatrix* A = createSparseMatrix(3, 3, 5);
+	sparseInsertElement(A, 0, 1, 5);
+	sparseInsertElement(A, 2, 0, 3);
+	sparseInsertElement(A, 2, 2, 1);
+
+	printSparseMatrix(A);
+}
+
 int main(int argc, char* argv[]){
 	// /!\ MPI are to be run with 2 processes
 
@@ -209,7 +286,9 @@ int main(int argc, char* argv[]){
 	//test_sparse_conjugate();
 	//test_mpi_dot_product(argc, argv);
 	//test_mpi_mat_vec_mul(argc, argv);
-	test_mpi_conjugate(argc, argv);
+	//test_mpi_conjugate(argc, argv);
+	//test_print_sparse_matrix();
+	test_set_system_matrix_elements(argc, argv);
 
 	return 0;
 }
