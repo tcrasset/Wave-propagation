@@ -354,7 +354,7 @@ void get_indices(int nbproc, int myrank, unsigned int size, unsigned int* start,
     }
 }
 
-double* MPISparseConjugateGradient(SparseMatrix* A, double* b, unsigned int size, unsigned int procSize, 
+double* MPISparseConjugateGradient(SparseMatrix* A, double* b, unsigned int size, 
                                    double rThresh, int nbproc, int myrank, unsigned int startIndex, 
                                    unsigned int endIndex, int* recvcounts, int* displs){
 
@@ -525,7 +525,6 @@ void BuildSystemMatrix(SparseMatrix** A, double** b, double* result, unsigned in
     *b = malloc((vEnd + 1) * sizeof(double));
 
     initAtb(*A, *b, result, start, end, xSize, ySize, h, params, t);
-    //printSparseMatrix(A);
     makeDefinitePositive(A, b, result, start, end, xSize, ySize, h, params, t);
 }
 
@@ -920,17 +919,24 @@ int eulerImplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     get_indices(nbproc, myrank, inputSize, &start, &end);
 
     for(unsigned int t = 1; t <= params->TMax/params->deltaT; t++){
-        //NULL params
-        //setSystemMatrixElements(A, b, x, start, end, xSize, ySize, h, params, t);
+        SparseMatrix* A;
+        double* b;
+        BuildSystemMatrix(&A, &b, x, start, end, xSize, ySize, h, params, t);
         free(x);
-        // Mult A par elle même
-        //calculer procsize et les recvcounts et displacements
-        // choper rThresh des params
-        int procSize = 0;
-        int* recvcounts = NULL;
-        int* displs = NULL;
-        double rThresh = 0.0;
-        x = MPISparseConjugateGradient(A, b, inputSize, procSize, rThresh, nbproc, myrank, start, end, recvcounts, displs);
+        unsigned int tmpStart, tmpEnd;
+        int* recvcounts = malloc(nbproc * sizeof(int));
+        int* displs = malloc(nbproc * sizeof(int))
+        displs[0] = 0;
+        for(unsigned int k; k < nbproc; k++){
+            get_indices(nbproc, k, inputSize, &tmpStart, &tmpEnd);
+            int tmpSize = tmpEnd - tmpStart + 1;
+            recvcounts[k] = tmpSize;
+            if(k < nbproc - 1)
+                displs[k+1] = displs[k] + tmpSize;
+        }
+       
+        double rThresh = params->r_threshold;
+        x = MPISparseConjugateGradient(A, b, inputSize, rThresh, nbproc, myrank, start, end, recvcounts, displs);
 
         // faire les saves
     }

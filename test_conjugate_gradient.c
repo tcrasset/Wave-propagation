@@ -223,7 +223,7 @@ void test_mpi_conjugate(int argc, char* argv[]){
 		sparseInsertElement(A, 1, 1, -1);
 		sparseInsertElement(A, 1, 2, 3);
 		
-		double* x = MPISparseConjugateGradient(A, b, 3, 2, 0.00001, nbproc, myrank, 0, 1, recvcounts, displs);
+		double* x = MPISparseConjugateGradient(A, b, 3, 0.00001, nbproc, myrank, 0, 1, recvcounts, displs);
 		fprintf(stderr, "proc %d:\n x = %lf\n y = %lf\n z = %lf\n", myrank, x[0], x[1], x[2]);
     }
     if(myrank == 1){
@@ -233,7 +233,7 @@ void test_mpi_conjugate(int argc, char* argv[]){
 		sparseInsertElement(A, 2, 1, 3);
 		sparseInsertElement(A, 2, 2, -1);
 
-		double* x = MPISparseConjugateGradient(A, b, 3, 1, 0.00001, nbproc, myrank, 2, 2, recvcounts, displs);
+		double* x = MPISparseConjugateGradient(A, b, 3, 0.00001, nbproc, myrank, 2, 2, recvcounts, displs);
 		fprintf(stderr, "proc %d:\n x = %lf\n y = %lf\n z = %lf\n", myrank, x[0], x[1], x[2]);
     }
 
@@ -482,11 +482,11 @@ int main(int argc, char* argv[]){
 	//test_mpi_mat_vec_mul(argc, argv);
 	//test_sparse_vec_dot_product();
 	//test_sparse_mat_vec_dot_product();
-	//test_mpi_conjugate(argc, argv);
+	test_mpi_conjugate(argc, argv);
 	//test_print_sparse_matrix();
 	//test_initAb(argc, argv);
 	//test_initAtb(argc, argv);
-	test_build_system_matrix(argc, argv);
+	//test_build_system_matrix(argc, argv);
 
 
 	return 0;
