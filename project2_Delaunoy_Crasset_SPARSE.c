@@ -5,92 +5,124 @@
 #include "project2_Delaunoy_Crasset_SPARSE.h"
 
 struct SparseMatrix_t{
+	SparseVector** vectors;
+	unsigned int begin;
+	unsigned int end;
+};
+
+struct SparseVector_t{
 	double* A;
-	unsigned int* IA;
-	unsigned int* JA;
-	unsigned int x;
-	unsigned int y;
+	int* indices;
 	unsigned int maxNbElements;
 	unsigned int currNbElement;
 };
 
-SparseMatrix* createSparseMatrix(unsigned int x, unsigned int y, unsigned int maxNbElements){
+SparseVector* createSparseVector(unsigned int maxNbElements){
+	SparseVector* vec = malloc(sizeof(SparseVector));
+	if(!vec)
+		return NULL;
+
+	vec->A = malloc(maxNbElements * sizeof(double));
+	if(!vec->A){
+		free(vec);
+		return NULL;
+	}
+
+	vec->indices = malloc(maxNbElements * sizeof(int));
+	if(!vec->indices){
+		free(vec->A);
+		free(vec);
+		return NULL;
+	}
+
+	vec->maxNbElements = maxNbElements;
+	vec->currNbElement = 0;
+
+	return vec;
+}
+
+void freeSparseVector(SparseVector* vec){
+	free(vec->A);
+	free(vec->indices);
+	free(vec);
+}
+
+SparseMatrix* createSparseMatrix(unsigned int begin, unsigned int end, unsigned int maxNbElements){
 	SparseMatrix* mat = malloc(sizeof(SparseMatrix));
 	if(!mat)
 		return NULL;
 
-	mat->A = malloc(maxNbElements * sizeof(double));
-	if(!mat->A){
+	mat->vectors = malloc((end-begin+1) * sizeof(SparseVector*));
+	if(!mat->vectors){
 		free(mat);
 		return NULL;
 	}
 
-	mat->IA = calloc(x + 1, sizeof(unsigned int));
-	if(!mat->IA){
-		free(mat->A);
-		free(mat);
-		return NULL;
+	for(unsigned int i = 0; i < end-begin+1; i++){
+		mat->vectors[i] = createSparseVector(maxNbElements);
+		if(!mat->vectors[i]){
+			for(int j = i-1; j >= 0; j--){
+				freeSparseVector(mat->vectors[j]);
+				free(mat->vectors);
+				free(mat);
+				return NULL;
+			}
+		}
 	}
 
-	mat->JA = malloc(maxNbElements * sizeof(unsigned int));
-	if(!mat->JA){
-		free(mat->IA);
-		free(mat->A);
-		free(mat);
-		return NULL;
-	}
-
-	mat->x = x;
-	mat->y = y;
-	mat->maxNbElements = maxNbElements;
-	mat->currNbElement = 0;
+	mat->begin = begin;
+	mat->end = end;
 
 	return mat;
 }
 
 void freeSparseMatrix(SparseMatrix* mat){
-	free(mat->A);
-	free(mat->IA);
-	free(mat->JA);
+	free(mat->vectors);
 	free(mat);
 }
 
-void printSparseMatrix(SparseMatrix* mat){
-	for(int i = 0; i < mat->currNbElement; i++){
-		int j = 0;
-		for(j = 0; j < mat->x + 1 && mat->IA[j] <= i; j++);
-		fprintf(stderr, "(%d, %d) = %lf\n", j-1, mat->JA[i], mat->A[i]);
-	}
+void printSparseVector(SparseVector* vec, int row){
+	for(int i = 0; i < vec->currNbElement; i++)
+		fprintf(stderr, "(%d, %d) = %lf\n", row, vec->indices[i], vec->A[i]);
 }
 
-double sparseDotProduct(SparseMatrix* mat, unsigned int row, double* vector){
+void printSparseMatrix(SparseMatrix* mat){
+	for(int i = mat->begin; i < mat->end + 1; i++)
+		printSparseVector(mat->vectors[i - mat->begin], i);
+}
+
+double vecSparseDotProduct(SparseVector* vec1, double* vec2){
 	double result = 0.0;
 
-	for(unsigned int i = mat->IA[row]; i < mat->IA[row+1]; i++){
-		result += mat->A[i] * vector[mat->JA[i]];
+	for(unsigned int i = 0; i < vec1->currNbElement; i++){
+		result += vec1->A[i] * vec2[vec1->indices[i]];
 	}
 
 	return result;
 }
 
+double sparseDotProduct(SparseMatrix* mat, unsigned int row, double* vector){
+	return vecSparseDotProduct(mat->vectors[row - mat->begin], vector);
+}
+
+void sparseVecInsertElement(SparseVector* vec, unsigned int j, double elem){
+	vec->A[vec->currNbElement] = elem;
+	vec->indices[vec->currNbElement] = j;
+
+	vec->currNbElement++;
+}
+
 void sparseInsertElement(SparseMatrix* mat, unsigned int i, unsigned int j, double elem){
+	sparseVecInsertElement(mat->vectors[i - mat->begin], j, elem);
+}
 
-	mat->A[mat->currNbElement] = elem;
-
-	for(unsigned int k = i+1; k < mat->x + 1; k++)
-		mat->IA[k]++;
-
-	mat->JA[mat->currNbElement] = j;
-
-	mat->currNbElement++;
+void resetSparseVector(SparseVector* vec){
+	vec->currNbElement = 0;
 }
 
 void resetSparseMatrix(SparseMatrix * mat){
-	mat->currNbElement = 0;
-
-	for(unsigned int i = 0; i < mat->x + 1; i++){
-		mat->IA[i] = 0;
-	}
+	for(int i = 0; i < mat->end - mat->begin + 1; i++)
+		resetSparseVector(mat->vectors[i]);
 }
 
 double MPIDotProduct(double* x, double* y, unsigned int size, unsigned int startIndex, unsigned int endIndex, int myrank, int nbproc){
@@ -115,10 +147,26 @@ void MPIMatVecMul(SparseMatrix* A, double* x, double* tmpBuff, double* result, u
     MPI_Allgatherv(tmpBuff, (endIndex - startIndex + 1), MPI_DOUBLE, result, recvcounts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
 }
 
-void MPIMatSparseVecMul(SparseMatrix* A, SparseMatrix* vec, unsigned int vecLine, double* tmpBuff, double* result, unsigned int size, unsigned int startIndex, unsigned int endIndex, int myrank, int nbproc, int* recvcounts, int* displs){
-	
+double sparseVecVecDotProduct(SparseVector* vec1, SparseVector* vec2){
+	double result = 0.0;
+	int i1 = 0;
+	int i2 = 0;
+	while(i1 < vec1->currNbElement && i2 < vec2->currNbElement){
+		if(vec1->indices[i1] < vec2->indices[i2]){
+			i1++;
+		}
+		else if(vec1->indices[i1] == vec2->indices[i2]){
+			result += vec1->A[i1] * vec2->A[i2];
+			i1++;
+			i2++;
+		}
+		else{
+			i2++;
+		}
+	}
+	return result;
 }
 
-void MPISelfMatMul(SparseMatrix* A, SparseMatrix* result, unsigned int size, unsigned int startIndex, unsigned int endIndex, int myrank, int nbproc, int* recvcounts, int* displs){
-	
+double sparseMatVecDotProduct(SparseMatrix* mat, unsigned int row, SparseVector* vec){
+	return sparseVecVecDotProduct(mat->vectors[row - mat->begin], vec);
 }
