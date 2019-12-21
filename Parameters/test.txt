@@ -1,0 +1,12 @@
+./mod_time_0,01.txt
+./mod_space_2000.txt
+./mod_time_1.txt
+./mod_space_25000.txt
+./mod_time_0,001.txt
+./mod_time_0,1.txt
+./mod_time_10.txt
+./mod_space_1000.txt
+./mod_space_10000.txt
+./mod_time_0,05.txt
+./mod_space_500.txt
+./mod_space_250.txt
