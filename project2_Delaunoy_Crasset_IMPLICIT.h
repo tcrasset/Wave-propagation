@@ -8,7 +8,7 @@ double dotProduct(double* x, double* y, unsigned int size);
 double vectorNorm(double* x, unsigned int size);
 double* conjugateGradient(double** A, double* b, unsigned int size, double rThresh);
 double* sparseConjugateGradient(SparseMatrix* A, double* b, unsigned int size, double rThresh);
-double* MPISparseConjugateGradient(SparseMatrix* A, double* b, unsigned int size, unsigned int procSize, 
+double* MPISparseConjugateGradient(SparseMatrix* A, double* b, unsigned int size, 
                                    double rThresh, int nbproc, int myrank, unsigned int startIndex, 
                                    unsigned int endIndex, int* recvcounts, int* displs);
 void initAb(SparseMatrix* A, double* b, double* result, unsigned int start, unsigned int end, int xSize, int ySize, double** h, Parameters* params, double t);
