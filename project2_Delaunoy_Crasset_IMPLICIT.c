@@ -920,6 +920,10 @@ int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, dou
     get_indices(nbproc, myrank, inputSize, &start, &end);
 
     for(unsigned int t = 1; t <= params->TMax/params->deltaT; t++){
+
+        if(myrank == 0)
+            fprintf(stderr, "t = %d\n", t);
+        
         SparseMatrix* A;
         double* b;
         BuildSystemMatrix(&A, &b, x, start, end, xSize, ySize, h, params, t);
