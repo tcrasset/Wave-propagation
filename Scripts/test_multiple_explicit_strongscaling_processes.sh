@@ -23,18 +23,16 @@ then
 
     echo "Launching multiprocess_computation.sh"
 
-    # for nb_threads in 1 2 4 8
-    # do
-    #     echo "Submitting job with 1 processes and $nb_threads threads"
-    #     sbatch --ntasks=1 --cpus-per-task=$nb_threads $serverPath/Scripts/test_computing_configuration.sh
-    # done
-
-    echo "Submitting job with 2 processes and 1 threads"
-    sbatch --ntasks=2 --cpus-per-task=1 $serverPath/Scripts/test_computing_configuration.sh
-    # echo "Submitting job with 2 processes and 2 threads"
-    # sbatch --ntasks=2 --cpus-per-task=2 $serverPath/Scripts/test_computing_configuration.sh
-    # echo "Submitting job with 4 processes and 1 threads"
-    # sbatch --ntasks=4 --cpus-per-task=1 $serverPath/Scripts/test_computing_configuration.sh
+    for nb_processes in 1 2 4 8 10 12 14 16
+    do
+        for nb_threads in 1
+        do
+            # let CPU_MEM="$MAX_MEM_PER_NODE/$nb_processes/$nb_threads"
+            # CPU_MEM="${CPU_MEM}G"
+            echo "Submitting job with $nb_processes processes and $nb_threads threads"
+            sbatch --ntasks=$nb_processes --cpus-per-task=$nb_threads $serverPath/Scripts/test_single_explicit_strongscaling.sh
+        done
+    done
 else
     printf "\nExiting\n"
     exit 1

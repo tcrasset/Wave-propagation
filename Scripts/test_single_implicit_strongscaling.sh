@@ -24,9 +24,10 @@ serverPath=/home/ulg/info0939/tcrasset/Project2
 parameter_file=sriLanka_strongscaling.txt
 map_file=sriLanka.dat
 TIMESTAMP=`date +%Y-%m-%d_%H-%M-%S`
-output_filename="$serverPath/Results/statistics_strongscaling1000it_$SLURM_NTASKS-$SLURM_CPUS_PER_TASK-on-$TIMESTAMP"
+output_filename="$serverPath/Results/statistics_strongscaling_implicit_1000_it_$SLURM_NTASKS-$SLURM_CPUS_PER_TASK-on-$TIMESTAMP"
 
+for ii in $(seq 2 2 $SLURM_NNODES);do sleep 1;echo $ii;srun -n $SLURM_NNODES -N $ii true;done
 
 # Output filename header
 echo "Scheme,Process number,Number of processes,Number of threads,Time per process,DeltaX,DeltaY,DeltaT,s,r_threshold" > $output_filename
-mpirun -np $SLURM_NTASKS $serverPath/waves $serverPath/Parameters/$parameter_file $serverPath/Maps/$map_file 0 0 0 >> $output_filename
+mpirun -np $SLURM_NTASKS $serverPath/waves $serverPath/Parameters/$parameter_file $serverPath/Maps/$map_file 1 0 0 >> $output_filename

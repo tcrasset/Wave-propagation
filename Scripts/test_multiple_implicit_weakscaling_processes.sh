@@ -30,7 +30,7 @@ then
             # let CPU_MEM="$MAX_MEM_PER_NODE/$nb_processes/$nb_threads"
             # CPU_MEM="${CPU_MEM}G"
             echo "Submitting job with $nb_processes processes and $nb_threads threads"
-            sbatch --ntasks=$nb_processes --cpus-per-task=$nb_threads $serverPath/Scripts/test_computing_configuration.sh
+            sbatch --ntasks=$nb_processes --cpus-per-task=$nb_threads $serverPath/Scripts/test_single_implicit_weakscaling.sh
         done
     done
 else

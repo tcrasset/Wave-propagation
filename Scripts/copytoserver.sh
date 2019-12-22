@@ -19,14 +19,26 @@ scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_IO.h $user@$server:$serverPa
 
 # Scripts
 scp -i $rsaPath $homePath/Scripts/test_computing_configuration.sh $user@$server:$serverPath/Scripts
-# scp -i $rsaPath $homePath/Scripts/test_multiple_computing_configurations.sh $user@$server:$serverPath/Scripts
-# scp -i $rsaPath $homePath/Scripts/test_multiple_parameters_files.sh $user@$server:$serverPath/Scripts
-# scp -i $rsaPath $homePath/Scripts/test_parameter_file.sh $user@$server:$serverPath/Scripts
-# scp -i $rsaPath $homePath/Scripts/namesOfParameterFiles.txt $user@$server:$serverPath/Scripts
-# scp -i $rsaPath $homePath/Scripts/test_weak_scaling.sh $user@$server:$serverPath/Scripts
-# scp -i $rsaPath $homePath/Scripts/test_multiple_weak_scaling.sh $user@$server:$serverPath/Scripts
-scp -i $rsaPath $homePath/Scripts/test_strong_scaling_threads.sh $user@$server:$serverPath/Scripts
-scp -i $rsaPath $homePath/Scripts/test_strong_scaling_processes.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_parameter_file.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_single_implicit_weakscaling_processes.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_multiple_weak_scaling.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_multiple_parameters_files.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_multiple_implicit_weakscaling_processes.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_multiple_implicit_strongscaling_threads.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_multiple_explicit_weakscaling_threads.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_single_explicit_weakscaling_threads.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_multiple_implicit_strongscaling_processes.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_multiple_computing_configurations.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_multiple_implicit_weakscaling_threads.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_single_implicit_strongscaling.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_weak_scaling.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_single_explicit_weakscaling_processes.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_single_implicit_weakscaling_threads.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_multiple_explicit_strongscaling_processes.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_multiple_explicit_strongscaling_threads.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_multiple_explicit_weakscaling_processes.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_single_explicit_strongscaling.sh $user@$server:$serverPath/Scripts
+
 
 # Parameters
 # scp -i $rsaPath $homePath/Parameters/base_params_refraction.txt $user@$server:$serverPath/Parameters
