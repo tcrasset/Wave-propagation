@@ -299,7 +299,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             }else if (myrank == 0){
                 MPI_Recv(uReceived, ySize + 1, MPI_DOUBLE, 1, 62, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }else{
-                MPI_Sendrecv(uCurr[0], ySize + 1, MPI_DOUBLE, myrank - 1, 62,
+                MPI_Sendrecv(((double**)uCurr)[0], ySize + 1, MPI_DOUBLE, myrank - 1, 62,
                             uReceived, ySize + 1, MPI_DOUBLE, myrank + 1, 62,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
         }
@@ -347,7 +347,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
             }else if (myrank == nbproc -1){
                 MPI_Recv(etaReceived, ySize + 1, MPI_DOUBLE, myrank - 1, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }else{
-                MPI_Sendrecv(etaCurr[size_X-1], ySize + 1, MPI_DOUBLE, myrank + 1, 42,
+                MPI_Sendrecv(((double**)etaCurr)[size_X-1], ySize + 1, MPI_DOUBLE, myrank + 1, 42,
                             etaReceived, ySize + 1, MPI_DOUBLE, myrank - 1, 42,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             }
         }
