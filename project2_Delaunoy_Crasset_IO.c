@@ -11,6 +11,7 @@
 #include <mpi.h>
 
 #include "project2_Delaunoy_Crasset_IO.h"
+#include "project2_Delaunoy_Crasset_EXPLICIT.h"
 
 double bilinearInterpolation(Map* map, double x, double y){
 
@@ -215,12 +216,6 @@ Parameters* readParameterFile(const char* filename) {
     return params;
 }
 
-void printUsefulMapInformation(Map* map) {
-    printf("X: %d Y: %d\n", map->X, map->Y);
-    printf("a : %lf, b : %lf \n", map->a, map->b);
-    printf("Sampling steps: dx = %lf, dy = %lf\n", map->dx, map->dy);
-}
-
 void writeResultArray(char* filename, int xsize, int ysize, double* array, int debug) {
     
     FILE* fp = fopen(filename, "wb");
@@ -250,68 +245,65 @@ void getFileNames(char* etaName, char* uName, char* vName, char* dir_name, unsig
     char* uPrefix = "u";
     char* vPrefix = "v";
 
-    char file_suffix[MAX_FILE_SIZE];
-    snprintf(file_suffix, MAX_FILE_SIZE, "_%u", iteration);
+    char file_suffix[MAX_FILENAME_SIZE];
+    snprintf(file_suffix, MAX_FILENAME_SIZE, "_%u", iteration);
 
-    strncpy(etaName, dir_name, MAX_FILE_SIZE);
-    strncat(etaName, etaPrefix, MAX_FILE_SIZE);
-    strncat(etaName, file_suffix, MAX_FILE_SIZE);
-    strncat(etaName, ".dat", MAX_FILE_SIZE);
+    strncpy(etaName, dir_name, MAX_FILENAME_SIZE);
+    strncat(etaName, etaPrefix, MAX_FILENAME_SIZE);
+    strncat(etaName, file_suffix, MAX_FILENAME_SIZE);
+    strncat(etaName, ".dat", MAX_FILENAME_SIZE);
 
-    strncpy(uName, dir_name, MAX_FILE_SIZE);
-    strncat(uName, uPrefix, MAX_FILE_SIZE);
-    strncat(uName, file_suffix, MAX_FILE_SIZE);
-    strncat(uName, ".dat", MAX_FILE_SIZE);
+    strncpy(uName, dir_name, MAX_FILENAME_SIZE);
+    strncat(uName, uPrefix, MAX_FILENAME_SIZE);
+    strncat(uName, file_suffix, MAX_FILENAME_SIZE);
+    strncat(uName, ".dat", MAX_FILENAME_SIZE);
 
-    strncpy(vName, dir_name, MAX_FILE_SIZE);
-    strncat(vName, vPrefix, MAX_FILE_SIZE);
-    strncat(vName, file_suffix, MAX_FILE_SIZE);
-    strncat(vName, ".dat", MAX_FILE_SIZE);
+    strncpy(vName, dir_name, MAX_FILENAME_SIZE);
+    strncat(vName, vPrefix, MAX_FILENAME_SIZE);
+    strncat(vName, file_suffix, MAX_FILENAME_SIZE);
+    strncat(vName, ".dat", MAX_FILENAME_SIZE);
 }
-
 int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xSize, 
     unsigned int ySize, unsigned int iteration, Parameters* params, int nbproc, int nbthreads) {
 
     static int createDirectory = 0;
-    static char full_path[MAX_FILE_SIZE];
-    
+    static char full_path[MAX_FILENAME_SIZE];
     int status = 0;
 
     // Attempt creating a directory when calling this function for the first time
-    if (createDirectory == 0) {
+    if(createDirectory == 0){
         createDirectory = 1;
 
         //Get current working directory
-        char current_dir[MAX_FILE_SIZE];
-        getcwd(current_dir, MAX_FILE_SIZE);
+        char current_dir[MAX_FILENAME_SIZE];
+        getcwd(current_dir, MAX_FILENAME_SIZE);
 
         // Get parameter file and remove '.txt' extension
         char* parameter_file = basename((char*)params->filename);
         parameter_file[strlen(parameter_file)-4] = 0; 
         
         // Create output directory
-        char new_dir[MAX_FILE_SIZE];
-        snprintf(new_dir, MAX_FILE_SIZE, "/Results/matrices_of_%s_%d_%d/", parameter_file, nbproc, nbthreads);
-        strncpy(full_path, current_dir, MAX_FILE_SIZE);
-        strncat(full_path, new_dir, MAX_FILE_SIZE);
+        char new_dir[MAX_FILENAME_SIZE];
+        snprintf(new_dir, MAX_FILENAME_SIZE, "/Results/matrices_of_%s_%d_%d/", parameter_file, nbproc, nbthreads);
+        strncpy(full_path, current_dir, MAX_FILENAME_SIZE);
+        strncat(full_path, new_dir, MAX_FILENAME_SIZE);
 
         // Check if file exists, if not, create it.
         if(access(full_path, F_OK) == -1) { 
             status = mkdir(full_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-            if (status == -1) {
+            if(status == -1){
                 fprintf(stderr, "Error in saveToDisk = %s\n" , strerror(errno));
                 fprintf(stderr, "Attempted to create: %s\n" , full_path);
                 MPI_Finalize();
                 exit(EXIT_FAILURE);
             }
         }
-
     }
-    
-    char etaFilename[MAX_FILE_SIZE];
-    char uFilename[MAX_FILE_SIZE];
-    char vFilename[MAX_FILE_SIZE];
 
+    // Create file names
+    char etaFilename[MAX_FILENAME_SIZE];
+    char uFilename[MAX_FILENAME_SIZE];
+    char vFilename[MAX_FILENAME_SIZE];
     getFileNames(etaFilename, uFilename, vFilename, full_path, iteration);
 
     writeResultArray(etaFilename, xSize + 1, ySize + 1, etaTotal, 0);

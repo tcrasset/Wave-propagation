@@ -1,7 +1,7 @@
 #ifndef IO_H_
 #define IO_H_
 
-#define MAX_FILE_SIZE 500
+#define MAX_FILENAME_SIZE 500
 
 typedef struct Parameters {
     const char* filename;
@@ -37,11 +37,12 @@ double getGridValueAtDomainCoordinates(Map* map, double x, double y);
 double** allocateDoubleMatrix(int x, int y);
 void freeDoubleMatrix(double** matrix, int x, int debug);
 void printUsefulMapInformation(Map* map);
-void writeResultMatrix(char* filename, int xsize, int ysize,double** matrix, int debug);
 void writeResultArray(char* filename, int xsize, int ysize,double* array, int debug);
 void writeTestMap(char* filename, int debug);
 void printGrid(Map* map);
+
 void getFileNames(char* etaName, char* uName, char* vName, char* dir_name, unsigned int iteration);
+
 int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xSize, 
     unsigned int ySize, unsigned int iteration, Parameters* params, int nbproc, int nbthreads);
     
