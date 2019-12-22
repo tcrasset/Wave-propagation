@@ -482,11 +482,11 @@ int main(int argc, char* argv[]){
 	//test_mpi_mat_vec_mul(argc, argv);
 	//test_sparse_vec_dot_product();
 	//test_sparse_mat_vec_dot_product();
-	test_mpi_conjugate(argc, argv);
+	//test_mpi_conjugate(argc, argv);
 	//test_print_sparse_matrix();
 	//test_initAb(argc, argv);
 	//test_initAtb(argc, argv);
-	//test_build_system_matrix(argc, argv);
+	test_build_system_matrix(argc, argv);
 
 
 	return 0;

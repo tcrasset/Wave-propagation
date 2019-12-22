@@ -3,14 +3,6 @@
 
 #include "project2_Delaunoy_Crasset_IO.h"
 
-typedef struct SparseMatrix {
-    unsigned int nonzeroSize;
-    unsigned int* m;
-    unsigned int* n;
-    unsigned int* v;
-} SparseMatrix;
-
-SparseMatrix* toSparseMatrix(double** matrix, int xSize, int ySize);
 void printUsefulMapInformation(Map* map);
 double* transformMatrixToArray(double** matrix, int x, int y);
 void get_array_sizes(int rank, int nbproc, int xSize, int* size_X, int* size_X_u, int* size_X_h, int* startval_X_h, int* endval_X_h);
