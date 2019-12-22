@@ -84,30 +84,27 @@ void freeSparseMatrix(SparseMatrix* mat){
 	free(mat);
 }
 
-void printSparseVector(SparseVector* vec, int row){
+void printSparseVector(const SparseVector* vec, int row){
 	for(int i = 0; i < vec->currNbElement; i++)
 		fprintf(stderr, "(%d, %d) = %lf\n", row, vec->indices[i], vec->A[i]);
 }
 
-void printSparseMatrix(SparseMatrix* mat){
+void printSparseMatrix(const SparseMatrix* mat){
 	for(int i = mat->begin; i < mat->end + 1; i++)
 		printSparseVector(mat->vectors[i - mat->begin], i);
 }
 
 double vecSparseDotProduct(const SparseVector* vec1, const double* vec2){
 	double result = 0.0;
-	#pragma omp parallel reduction(+: result) default(shared)
-	{
-		#pragma omp for schedule(static)
-		for(unsigned int i = 0; i < vec1->currNbElement; i++){
-			result += vec1->A[i] * vec2[vec1->indices[i]];
-		}
+	
+	for(unsigned int i = 0; i < vec1->currNbElement; i++){
+		result += vec1->A[i] * vec2[vec1->indices[i]];
 	}
 
 	return result;
 }
 
-double sparseDotProduct(SparseMatrix* mat, unsigned int row, double* vector){
+double sparseDotProduct(const SparseMatrix* mat, unsigned int row, const double* vector){
 	return vecSparseDotProduct(mat->vectors[row - mat->begin], vector);
 }
 
@@ -149,16 +146,20 @@ double MPIDotProduct(const double* x, const double* y, unsigned int size, unsign
     return totResult;
 }
 
-void MPIMatVecMul(SparseMatrix* A, double* x, double* tmpBuff, double* result, unsigned int startIndex, unsigned int endIndex, int myrank, int nbproc, int* recvcounts, int* displs){
+void MPIMatVecMul(const SparseMatrix* A, const double* x, double* tmpBuff, double* result, unsigned int startIndex, unsigned int endIndex, int myrank, int nbproc, int* recvcounts, int* displs){
 
-    for(unsigned int i = startIndex ; i <= endIndex; i++){
-        tmpBuff[i-startIndex] = sparseDotProduct(A, i, x);
-    }
+	#pragma omp parallel default(shared)
+	{
+		#pragma omp for schedule(static)
+	    for(unsigned int i = startIndex ; i <= endIndex; i++){
+	        tmpBuff[i-startIndex] = sparseDotProduct(A, i, x);
+	    }
+	}
 
     MPI_Allgatherv(tmpBuff, (endIndex - startIndex + 1), MPI_DOUBLE, result, recvcounts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
 }
 
-double sparseVecVecDotProduct(SparseVector* vec1, SparseVector* vec2){
+double sparseVecVecDotProduct(const SparseVector* vec1, const SparseVector* vec2){
 	double result = 0.0;
 	int i1 = 0;
 	int i2 = 0;
@@ -178,6 +179,6 @@ double sparseVecVecDotProduct(SparseVector* vec1, SparseVector* vec2){
 	return result;
 }
 
-double sparseMatVecDotProduct(SparseMatrix* mat, unsigned int row, SparseVector* vec){
+double sparseMatVecDotProduct(const SparseMatrix* mat, unsigned int row, const SparseVector* vec){
 	return sparseVecVecDotProduct(mat->vectors[row - mat->begin], vec);
 }
