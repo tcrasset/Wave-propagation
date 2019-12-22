@@ -86,8 +86,8 @@ if __name__=='__main__':
 	# foldername = "matrices_of_mod_space_250_4_4" # Exploded
 	# filename = "eta_40000"	
 
-	foldername = "matrices_of_mod_space_500_4_4" # Exploded
-	filename = "eta_40000"
+	# foldername = "matrices_of_mod_space_500_4_4" # Exploded
+	# filename = "eta_40000"
 
 	# foldername = "matrices_of_mod_space_1000_4_4"
 	# filename = "eta_40000"
@@ -120,8 +120,8 @@ if __name__=='__main__':
 	# filename = "eta_1500000"
 
 
-
-
+	foldername = "matrices_of_sriLanka_implicit_25000_2_1"
+	filename = "eta_100"
 
 
 	dat = ".dat"
