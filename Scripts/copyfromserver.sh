@@ -18,6 +18,7 @@ ssh-add $rsaPath
 
 # scp -i $rsaPath $user@$server:$serverPath/Results/statistics_for_weakscaling* $homePath/Results
 # scp -i $rsaPath $user@$server:$serverPath/Results/statistics_for_weakscaling_threads* $homePath/Results
-scp -i $rsaPath $user@$server:$serverPath/Results/statistics_strongscaling* $homePath/Report/stats/strongscaling
+# scp -i $rsaPath $user@$server:$serverPath/Results/statistics_strongscaling_explicit_10000_it* $homePath/Report/stats/strongscaling
+scp -i $rsaPath $user@$server:$serverPath/Results/statistics_explicit_weakscaling_* $homePath/Report/stats/weakscaling
 
 # scp -i $rsaPath $user@$server:$serverPath/Results/mod_matrices.zip $homePath/Results

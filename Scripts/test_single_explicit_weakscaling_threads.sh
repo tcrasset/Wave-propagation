@@ -1,7 +1,7 @@
 #!/bin/bash
 # Submission script for NIC4
 #SBATCH --job-name=TestRun
-#SBATCH --time=00:10:00 # hh:mm:ss
+#SBATCH --time=00:20:00 # hh:mm:ss
 #
 #SBATCH --mem-per-cpu=250 # megabytes
 #SBATCH --partition=defq

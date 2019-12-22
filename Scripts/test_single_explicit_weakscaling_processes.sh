@@ -21,7 +21,7 @@ export MKL_NUM_THREADS=$SLURM_NTASKS
 serverPath=/home/ulg/info0939/tcrasset/Project2
 ##############################################
 
-parameter_file=explicit_processes_$SLURM_CPUS_PER_TASK-params_sriLanka.txt
+parameter_file=explicit_process_$SLURM_NTASKS-params_sriLanka.txt
 map_file=sriLanka.dat
 TIMESTAMP=`date +%Y-%m-%d_%H-%M-%S`
 output_filename="$serverPath/Results/statistics_explicit_weakscaling_$SLURM_NTASKS-$SLURM_CPUS_PER_TASK-on-$TIMESTAMP"
