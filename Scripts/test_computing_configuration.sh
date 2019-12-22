@@ -1,9 +1,9 @@
 #!/bin/bash
 # Submission script for NIC4
 #SBATCH --job-name=TestRun
-#SBATCH --time=04:00:00 # hh:mm:ss
+#SBATCH --time=00:10:00 # hh:mm:ss
 #
-#SBATCH --mem-per-cpu=500 # megabytes
+#SBATCH --mem-per-cpu=250 # megabytes
 #SBATCH --partition=defq
 #
 #SBATCH --mail-user=tomcrasset@gmail.com
@@ -21,10 +21,10 @@ export MKL_NUM_THREADS=$SLURM_NTASKS
 serverPath=/home/ulg/info0939/tcrasset/Project2
 ##############################################
 
-parameter_file=base_params_sriLanka.txt
+parameter_file=sriLanka_strongscaling.txt
 map_file=sriLanka.dat
 TIMESTAMP=`date +%Y-%m-%d_%H-%M-%S`
-output_filename="$serverPath/Results/statistics_for_configuration_$SLURM_NTASKS-$SLURM_CPUS_PER_TASK-on-$TIMESTAMP"
+output_filename="$serverPath/Results/statistics_strongscaling1000it_$SLURM_NTASKS-$SLURM_CPUS_PER_TASK-on-$TIMESTAMP"
 
 
 # Output filename header

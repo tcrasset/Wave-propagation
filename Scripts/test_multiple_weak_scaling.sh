@@ -23,9 +23,9 @@ then
 
     echo "Launching multiprocess_computation.sh"
 
-    for nb_processes in 1 2 4 8 16
+    for nb_processes in 1
     do
-        for nb_threads in 4
+        for nb_threads in 1 2 4 8 16
         do
             echo "Submitting job with $nb_processes processes and $nb_threads threads"
             sbatch --ntasks=$nb_processes --cpus-per-task=$nb_threads $serverPath/Scripts/test_weak_scaling.sh

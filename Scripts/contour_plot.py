@@ -83,11 +83,11 @@ if __name__=='__main__':
 	# contourInput('test_map.dat')
 	directory = "/home/tom/Documents/Uliege/Master2/HPC/Project2/Results"
 
-	# foldername = "matrices_of_mod_space_250_4_4"
+	# foldername = "matrices_of_mod_space_250_4_4" # Exploded
 	# filename = "eta_40000"	
 
-	# foldername = "matrices_of_mod_space_500_4_4" # Exploded
-	# filename = "eta_40000"
+	foldername = "matrices_of_mod_space_500_4_4" # Exploded
+	filename = "eta_40000"
 
 	# foldername = "matrices_of_mod_space_1000_4_4"
 	# filename = "eta_40000"
@@ -101,8 +101,8 @@ if __name__=='__main__':
 	# foldername = "matrices_of_mod_space_25000_4_4"
 	# filename = "eta_40000"
 
-	foldername = "matrices_of_mod_time_10_4_4" # Exploded
-	filename = "eta_1000"
+	# foldername = "matrices_of_mod_time_10_4_4" # Exploded
+	# filename = "eta_1000"
 
 	# foldername = "matrices_of_mod_time_1_4_4" # Exploded
 	# filename = "eta_100000"
@@ -126,7 +126,8 @@ if __name__=='__main__':
 
 	dat = ".dat"
 	svg = ".svg"
-	output_filename = "{}/{}/{}.svg".format(directory, foldername, filename)
+	# output_filename = "{}/{}/{}.svg".format(directory, foldername, filename)
+	output_filename = "{}/{}/{}.png".format(directory, foldername, filename)
 	input_filename = "{}/{}/{}.dat".format(directory, foldername, filename)
 	contourOutput(input_filename, output_filename)
 
