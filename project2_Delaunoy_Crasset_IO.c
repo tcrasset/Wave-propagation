@@ -20,16 +20,9 @@ double bilinearInterpolation(Map* map, double x, double y){
     assert(y <= map->b);
 
     // Sampling coordinates
-    // NB: trunc comes from the math library, which is not included in base gcc, you have to 
-    // compile your code using the flag -lm to add it at compile time like this:
-    // gcc -g yourfile.c -lm -o yourOutFile
-    // i.e. the flag should come after the c code
+
     int k = trunc(x/map->dx);
     int l = trunc(y/map->dy);
-
-    // printUsefulMapInformation(map);
-    // printf("x : %lf, y : %lf \n", x, y);
-    // printf("k: %d, l: %d \n", k, l);
 
     double x_k = k * map->dx;
     double x_k1 = (k+1) * map->dx;
@@ -44,7 +37,7 @@ double bilinearInterpolation(Map* map, double x, double y){
     double return_value = prod1 * map->grid[k][l];  
     double epsilon = 10e-6;
 
-    // Robust != statement
+    // Robust implementation of the statement
     if(fabs(x - map->a) > epsilon)
         return_value += prod3 * map->grid[k+1][l];
 
@@ -58,12 +51,6 @@ double bilinearInterpolation(Map* map, double x, double y){
 
     return return_value;
 
-    /*
-    return (prod1 * map->grid[k][l]
-            + prod2 * map->grid[k][l+1]
-            + prod3 * map->grid[k+1][l]
-            + prod4 * map->grid[k+1][l+1])/(map->dx*map->dy);
-    */
 }
 
 double getGridValueAtDomainCoordinates(Map* map, double x, double y){
@@ -105,27 +92,7 @@ void freeDoubleMatrix(double** matrix, int x, int debug){
     assert(x > 0);
     assert(matrix);
 
-
     for(int i = 0; i < x; i++){
-        if(debug == 1){
-            int nbproc, myrank ;
-
-            MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-            MPI_Comm_size(MPI_COMM_WORLD, &nbproc);
-
-            if(myrank == 1){
-
-                int startval_Y = (10 * myrank) / (nbproc);
-                int endval_Y = (10 * (myrank+1)) / (nbproc);
-
-                int start = (myrank == 0) ? 0 : 2*startval_Y + 3;
-                
-                for(int j = start; j < 2 * endval_Y +3 ; j++){
-                    fprintf(stderr, "P%d (%d,%d) = %lf\n",myrank, i,j,*(matrix[i] + j));
-                }
-            }
-        }
-
         if(matrix[i] != NULL){
             free(matrix[i]);
         }
@@ -145,30 +112,6 @@ double* transformMatrixToArray(double** matrix, int x, int y){
     }
 
     return array;
-}
-
-void printDoubleMatrix(double** matrix, int x, int y, int process_rank) {
-    assert(x > 0);
-    assert(y > 0);
-    assert(matrix != NULL);
-
-    for (int i = 0; i < x; i++) {
-        for (int j = 0; j < y; j++) {
-            fprintf(stderr, "\tP%d\t", process_rank);
-            fprintf(stderr, "%lf ", matrix[i][j]);
-        }
-        fprintf(stderr, "\n");
-    }
-}
-
-void printLinearArray(double* array, int x, int y) {
-    for (int i = 0; i < x * y; i++) {
-        fprintf(stderr, "%lf ", array[i]);
-        if (i != 0 && (i + 1) % (y) == 0) {
-            fprintf(stderr, "\n");
-        }
-    }
-    fprintf(stderr, "\n");
 }
 
 Map* readMapFile(const char* filename, int debug) {
@@ -223,13 +166,10 @@ Map* readMapFile(const char* filename, int debug) {
     }
 
     // Read the bathymetry depth grid from the map file
-
     long long i = 0;
     fread(buffer, 8, 1, fp);
     for (int row = map->Y - 1; row >= 0; row--) {
         for (int col = 0; col < map->X; fread(buffer, 8, 1, fp), col++) {
-            if (debug == 1)
-                printf("(%d,%d)=%lf\n", col, row, *((double*)buffer));
             map->grid[col][row] = *((double*)buffer);
         }
     }
@@ -256,6 +196,7 @@ Parameters* readParameterFile(const char* filename) {
         MPI_Finalize();
         exit(EXIT_FAILURE);
     }
+
     params->filename = filename;
     fscanf(fp, "%lf", &params->g);
     fscanf(fp, "%lf", &params->gamma);
@@ -278,31 +219,6 @@ void printUsefulMapInformation(Map* map) {
     printf("X: %d Y: %d\n", map->X, map->Y);
     printf("a : %lf, b : %lf \n", map->a, map->b);
     printf("Sampling steps: dx = %lf, dy = %lf\n", map->dx, map->dy);
-}
-
-void writeResultMatrix(char* filename, int xsize, int ysize, double** matrix, int debug) {
-    FILE* fp;
-
-    fp = fopen(filename, "wb");
-    if (fp == NULL) {
-        fprintf(stderr, "Unable to open file %s\n", filename);
-        MPI_Finalize();
-        exit(EXIT_FAILURE);
-    }
-
-    fwrite(&xsize, sizeof(xsize), 1, fp);
-    fwrite(&ysize, sizeof(ysize), 1, fp);
-
-    for (int row = ysize - 1; row >= 0; row--) {
-        for (int col = 0; col < xsize; col++) {
-            if (debug == 1) {
-                printf("%lf \n", matrix[col][row]);
-            }
-            fwrite(&matrix[col][row], 8, 1, fp);
-        }
-    }
-
-    fclose(fp);
 }
 
 void writeResultArray(char* filename, int xsize, int ysize, double* array, int debug) {
@@ -328,51 +244,6 @@ void writeResultArray(char* filename, int xsize, int ysize, double* array, int d
     fclose(fp);
 }
 
-void writeTestMap(char* filename, int debug) {
-    FILE* fp;
-
-    fp = fopen(filename, "w");
-    if (fp == NULL) {
-        fprintf(stderr, "Unable to open file %s\n", filename);
-        exit(EXIT_FAILURE);
-    }
-
-    double a = 5;
-    double b = 10;
-    int X = 20;
-    int Y = 10;
-
-    assert(a > 0);
-    assert(b > 0);
-    assert(X > 0);
-    assert(Y > 0);
-
-    fwrite(&a, sizeof(a), 1, fp);
-    fwrite(&b, sizeof(b), 1, fp);
-    fwrite(&X, sizeof(X), 1, fp);
-    fwrite(&Y, sizeof(Y), 1, fp);
-
-    for (int row = 0; row < Y; row++) {
-        for (int col = 0; col < X; col++) {
-            double value = (double)(Y - row - 1) * X + col;
-            if (debug == 1)
-                printf("%lf \n", value);
-            fwrite(&value, sizeof(value), 1, fp);
-        }
-    }
-
-    fclose(fp);
-}
-
-void printGrid(Map* map) {
-    assert(map);
-    for (int i = 0; i < map->X; i++) {
-        for (int j = 0; j < map->Y; j++) {
-            printf("%lf ", map->grid[i][j]);
-        }
-        printf("\n");
-    }
-}
 
 void getFileNames(char* etaName, char* uName, char* vName, char* dir_name, unsigned int iteration) {
     char* etaPrefix = "eta";
@@ -398,9 +269,12 @@ void getFileNames(char* etaName, char* uName, char* vName, char* dir_name, unsig
     strncat(vName, ".dat", MAX_FILE_SIZE);
 }
 
-int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xSize, unsigned int ySize, unsigned int iteration, Parameters* params) {
+int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xSize, 
+    unsigned int ySize, unsigned int iteration, Parameters* params, int nbproc, int nbthreads) {
+
     static int createDirectory = 0;
     static char full_path[MAX_FILE_SIZE];
+    
     int status = 0;
 
     // Attempt creating a directory when calling this function for the first time
@@ -417,7 +291,7 @@ int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xS
         
         // Create output directory
         char new_dir[MAX_FILE_SIZE];
-        snprintf(new_dir, MAX_FILE_SIZE, "/Results/matrices_of_%s/", parameter_file);
+        snprintf(new_dir, MAX_FILE_SIZE, "/Results/matrices_of_%s_%d_%d/", parameter_file, nbproc, nbthreads);
         strncpy(full_path, current_dir, MAX_FILE_SIZE);
         strncat(full_path, new_dir, MAX_FILE_SIZE);
 
@@ -426,6 +300,7 @@ int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xS
             status = mkdir(full_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
             if (status == -1) {
                 fprintf(stderr, "Error in saveToDisk = %s\n" , strerror(errno));
+                fprintf(stderr, "Attempted to create: %s\n" , full_path);
                 MPI_Finalize();
                 exit(EXIT_FAILURE);
             }
@@ -433,10 +308,10 @@ int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xS
 
     }
     
-    // Create file names
     char etaFilename[MAX_FILE_SIZE];
     char uFilename[MAX_FILE_SIZE];
     char vFilename[MAX_FILE_SIZE];
+
     getFileNames(etaFilename, uFilename, vFilename, full_path, iteration);
 
     writeResultArray(etaFilename, xSize + 1, ySize + 1, etaTotal, 0);

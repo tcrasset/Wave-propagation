@@ -870,12 +870,12 @@ void initAtb(SparseMatrix* A, double* b, double* result, unsigned int start, uns
     }
 }
 
-void saveImplicit(double* x, int xSize, int ySize, unsigned int iteration, Parameters* params){
+void saveImplicit(double* x, int xSize, int ySize, unsigned int iteration, Parameters* params, int nbproc, int nbThread){
 
     int uBegin = (xSize + 1) * (ySize + 1);
     int vBegin = uBegin + (xSize + 2) * (ySize + 1);
 
-    saveToDisk(x, x + uBegin, x + vBegin, xSize, ySize, iteration, params);
+    saveToDisk(x, x + uBegin, x + vBegin, xSize, ySize, iteration, params, nbproc, nbThread);
 }
 
 int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, double** v, int debug, int debug_rank){
@@ -886,6 +886,7 @@ int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, dou
 
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     MPI_Comm_size(MPI_COMM_WORLD, &nbproc);
+    int openMP_nbthreads = atoi(getenv("OMP_NUM_THREADS"));
 
     /*
     fprintf(stderr, "map->a = %lf\n", map->a);
@@ -962,7 +963,7 @@ int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, dou
         // Process 0 saves arrays to disk
         if(params->S != 0 && t % params->S == 0){
             // Save to disk
-            saveImplicit(x, xSize, ySize, t, params);
+            saveImplicit(x, xSize, ySize, t, params, nbproc, openMP_nbthreads);
         }
 
         free(recvcounts);
@@ -973,7 +974,7 @@ int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, dou
 
     freeDoubleMatrix(h, 2*xSize+3, 0);
 
-    saveImplicit(x, xSize, ySize, params->TMax/params->deltaT, params);
+    saveImplicit(x, xSize, ySize, params->TMax/params->deltaT, params, nbproc, openMP_nbthreads);
 
     int uBegin = (xSize + 1) * (ySize + 1);
     int vBegin = uBegin + (xSize + 2) * (ySize + 1);
@@ -981,14 +982,6 @@ int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, dou
     *eta = x;
     *u = x + uBegin;
     *v = x + vBegin;
-
-    if(myrank == 0){
-        fprintf(stderr,"***********ETA**************\n");
-        printLinearArray(*eta, xSize + 1, ySize + 1);
-        fprintf(stderr,"***********U**************\n");
-        printLinearArray(*u, xSize + 2, ySize + 1);
-        fprintf(stderr,"***********V**************\n");
-        printLinearArray(*v, xSize + 1, ySize + 2);
-    }
+    
     return 0;
 }
