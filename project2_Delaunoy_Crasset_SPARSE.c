@@ -94,7 +94,7 @@ void printSparseMatrix(SparseMatrix* mat){
 		printSparseVector(mat->vectors[i - mat->begin], i);
 }
 
-double vecSparseDotProduct(SparseVector* vec1, double* vec2){
+double vecSparseDotProduct(const SparseVector* vec1, const double* vec2){
 	double result = 0.0;
 	#pragma omp parallel reduction(+: result) default(shared)
 	{
@@ -131,7 +131,7 @@ void resetSparseMatrix(SparseMatrix * mat){
 		resetSparseVector(mat->vectors[i]);
 }
 
-double MPIDotProduct(double* x, double* y, unsigned int size, unsigned int startIndex, unsigned int endIndex, int myrank, int nbproc){
+double MPIDotProduct(const double* x, const double* y, unsigned int size, unsigned int startIndex, unsigned int endIndex, int myrank, int nbproc){
     double myResult = 0.0;
 
     #pragma omp parallel reduction(+: myResult) default(shared)
