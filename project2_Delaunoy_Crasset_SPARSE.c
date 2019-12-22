@@ -95,21 +95,14 @@ void printSparseMatrix(SparseMatrix* mat){
 }
 
 double vecSparseDotProduct(SparseVector* vec1, double* vec2){
-	/*
 	double result = 0.0;
-	#pragma omp parallel reduction(+: result) private(vec1, vec2) default(shared)
+	#pragma omp parallel reduction(+: result) default(shared)
 	{
 		#pragma omp for schedule(static)
 		for(unsigned int i = 0; i < vec1->currNbElement; i++){
 			result += vec1->A[i] * vec2[vec1->indices[i]];
 		}
 	}
-	*/
-
-	double result = 0.0;
-		for(unsigned int i = 0; i < vec1->currNbElement; i++){
-			result += vec1->A[i] * vec2[vec1->indices[i]];
-		}
 
 	return result;
 }
@@ -141,18 +134,13 @@ void resetSparseMatrix(SparseMatrix * mat){
 double MPIDotProduct(double* x, double* y, unsigned int size, unsigned int startIndex, unsigned int endIndex, int myrank, int nbproc){
     double myResult = 0.0;
 
-    /*
-    #pragma omp parallel reduction(+: myResult) private(x, y) default(shared)
+    #pragma omp parallel reduction(+: myResult) default(shared)
 	{	
 		#pragma omp for schedule(static)
 	    for(unsigned int i = startIndex; i <= endIndex; i++){
 	        myResult += x[i] * y[i];
 	    }
 	}
-	*/
-	    for(unsigned int i = startIndex; i <= endIndex; i++){
-	        myResult += x[i] * y[i];
-	    }
 
     double totResult;
 
