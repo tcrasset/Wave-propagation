@@ -1,9 +1,21 @@
 #!/bin/bash
 # Submission script for NIC4
 #SBATCH --job-name=TestRun
+<<<<<<< HEAD
 #SBATCH --time=00:20:00 # hh:mm:ss
 #
 #SBATCH --mem-per-cpu=250 # megabytes
+=======
+<<<<<<< HEAD
+#SBATCH --time=00:20:00 # hh:mm:ss
+#
+#SBATCH --mem-per-cpu=250 # megabytes
+=======
+#SBATCH --time=00:05:00 # hh:mm:ss
+#
+#SBATCH --mem-per-cpu=500 # megabytes
+>>>>>>> master
+>>>>>>> implicit
 #SBATCH --partition=defq
 #
 #SBATCH --mail-user=tomcrasset@gmail.com

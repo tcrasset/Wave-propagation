@@ -86,8 +86,8 @@ if __name__=='__main__':
 	# foldername = "matrices_of_mod_space_250_4_4" # Exploded
 	# filename = "eta_40000"	
 
-	foldername = "matrices_of_mod_space_500_4_4" # Exploded
-	filename = "eta_40000"
+	# foldername = "matrices_of_mod_space_500_4_4" # Exploded
+	# filename = "eta_40000"
 
 	# foldername = "matrices_of_mod_space_1000_4_4"
 	# filename = "eta_40000"
@@ -116,12 +116,8 @@ if __name__=='__main__':
 	# foldername = "matrices_of_mod_time_0,05_4_4"
 	# filename = "eta_40000"
 
-	# foldername = "matrices_of_mod_time_0,001_4_4"
-	# filename = "eta_1500000"
-
-
-
-
+	foldername = "matrices_of_mod_time_0,001_4_4"
+	filename = "eta_1500000"
 
 
 	dat = ".dat"
@@ -130,7 +126,4 @@ if __name__=='__main__':
 	output_filename = "{}/{}/{}.png".format(directory, foldername, filename)
 	input_filename = "{}/{}/{}.dat".format(directory, foldername, filename)
 	contourOutput(input_filename, output_filename)
-
-
-
 

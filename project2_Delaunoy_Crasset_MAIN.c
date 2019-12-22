@@ -8,8 +8,11 @@
 #include <unistd.h>
 #include <mpi.h>
 
-#include "project2_Delaunoy_Crasset_EXPLICIT.h"
 #include "project2_Delaunoy_Crasset_IO.h"
+#include "project2_Delaunoy_Crasset_IMPLICIT.h"
+#include "project2_Delaunoy_Crasset_EXPLICIT.h"
+
+#define M_PI 3.14159265358979323846
 
 int main(int argc, char* argv[]) {
 
@@ -61,15 +64,22 @@ int main(int argc, char* argv[]) {
             exit(EXIT_FAILURE);
         }
     }
-    // Implicit
-    else{
-        printf("Implicit ");
-        printf("%s %s %u", parameter_file, map_file, scheme);
-    }
 
-    free(params);
-    freeDoubleMatrix(map->grid, map->X,0);
-    free(map);
+    // Implicit
+    else {
+        double* eta;
+        double* u;
+        double* v;
+        if(eulerImplicitMPI(map, params, &eta, &u, &v, debug, debug_rank) == -1){
+            fprintf(stderr, "error in euler function\n");
+            free(params);
+            free(map->grid);
+            free(map);
+            MPI_Finalize();
+            exit(EXIT_FAILURE);
+            
+        }
+    }
 
     // Mesure execution time
     double endTime = MPI_Wtime();

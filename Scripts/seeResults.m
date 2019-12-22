@@ -1,6 +1,5 @@
 function v = seeResults(field,filename, step)
   complete_name = sprintf('/home/tom/Documents/Uliege/Master2/HPC/Project2/Results/%s/%s_%d.dat', filename, field, step)
-
   fid = fopen(complete_name, 'r');
   N = fread(fid,1,'int32');
   M = fread(fid,1,'int32');

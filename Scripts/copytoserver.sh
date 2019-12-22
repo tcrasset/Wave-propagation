@@ -14,6 +14,10 @@ ssh-add $rsaPath
 scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_MAIN.c $user@$server:$serverPath
 scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_EXPLICIT.c $user@$server:$serverPath
 scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_EXPLICIT.h $user@$server:$serverPath
+scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_IMPLICIT.c $user@$server:$serverPath
+scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_IMPLICIT.h $user@$server:$serverPath
+scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_SPARSE.c $user@$server:$serverPath
+scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_SPARSE.h $user@$server:$serverPath
 scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_IO.c $user@$server:$serverPath
 scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_IO.h $user@$server:$serverPath
 
@@ -56,6 +60,7 @@ scp -i $rsaPath $homePath/Scripts/test_single_explicit_strongscaling.sh $user@$s
 # scp -i $rsaPath $homePath/Parameters/threads_16-params_sriLanka.txt $user@$server:$serverPath/Parameters
 
 scp -i $rsaPath $homePath/Parameters/sriLanka_strongscaling.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Parameters/sriLanka_implicit_25000.txt $user@$server:$serverPath/Parameters
 
 
 # scp -i $rsaPath $homePath/Parameters/mod_time_0,01.txt $user@$server:$serverPath/Parameters

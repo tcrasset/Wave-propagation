@@ -1,5 +1,3 @@
-
-
 #include <assert.h>
 #include <libgen.h>
 #include <math.h>
@@ -12,35 +10,109 @@
 #include <errno.h>
 #include <mpi.h>
 
-#include "project2_Delaunoy_Crasset_EXPLICIT.h"
+#include "project2_Delaunoy_Crasset_IO.h"
 
-/*
-void printDoubleMatrix(double** matrix, int x, int y, int process_rank) {
+double bilinearInterpolation(Map* map, double x, double y){
+
+    assert(0 <= x);
+    assert(0 <= y);
+    assert(x <= map->a);
+    assert(y <= map->b);
+
+    // Sampling coordinates
+
+    int k = trunc(x/map->dx);
+    int l = trunc(y/map->dy);
+
+    double x_k = k * map->dx;
+    double x_k1 = (k+1) * map->dx;
+    double y_l = l * map->dy;
+    double y_l1 = (l+1) * map->dy;
+
+    double prod1 = (x_k1 - x) * (y_l1 - y);
+    double prod2 = (x_k1 - x) * (y - y_l);
+    double prod3 = (x - x_k) * (y_l1 - y);
+    double prod4 = (x - x_k) * (y - y_l);
+
+    double return_value = prod1 * map->grid[k][l];  
+    double epsilon = 10e-6;
+
+    // Robust implementation of the statement
+    if(fabs(x - map->a) > epsilon)
+        return_value += prod3 * map->grid[k+1][l];
+
+    if(fabs(y - map->b) > epsilon)
+        return_value += prod2 * map->grid[k][l+1];
+
+    if(fabs(x - map->a) > epsilon && fabs(y - map->b) > epsilon)
+        return_value += prod4 * map->grid[k+1][l+1];
+
+    return_value /= map->dx*map->dy;
+
+    return return_value;
+
+}
+
+double getGridValueAtDomainCoordinates(Map* map, double x, double y){
+    double epsilon = 10e-6;
+    assert(x >= 0);
+    assert(y >= 0);
+    // Sampling step
+
+    // If value already in the grid, use that instead of interpolating
+    if(fmod(x, map->dx) < epsilon && fmod(y, map->dy)  < epsilon){
+        return map->grid[(int) trunc(x/map->dx)][(int) trunc(y/map->dy)]; 
+    } else {
+        return bilinearInterpolation(map, x, y);
+    }
+}
+
+
+double** allocateDoubleMatrix(int x, int y){
     assert(x > 0);
     assert(y > 0);
-    assert(matrix != NULL);
+    double** matrix = malloc(x * sizeof(double*));
+    if(!matrix)
+        return NULL;
 
-    for (int i = 0; i < x; i++) {
-        for (int j = 0; j < y; j++) {
-            // fprintf(stderr, "\tP%d\t", process_rank);
-            fprintf(stderr, "%.2lf  ", matrix[i][j]);
-        }
-        fprintf(stderr, "\n");
-    }
-}
-*/
-
-/*
-void printLinearArray(double* array, int x, int y) {
-    for (int i = 0; i < x * y; i++) {
-        fprintf(stderr, "%lf ", array[i]);
-        if (i != 0 && (i + 1) % (y) == 0) {
-            fprintf(stderr, "\n");
+    for(int i = 0; i < x; i++){
+        matrix[i] = malloc(y * sizeof(double));
+        if(!matrix[i]){
+            for(int j = i-1; j >= 0; j--)
+                free(matrix[j]);
+            free(matrix);
+            return NULL;
         }
     }
-    fprintf(stderr, "\n");
+
+    return matrix;
 }
-*/
+
+void freeDoubleMatrix(double** matrix, int x, int debug){
+    assert(x > 0);
+    assert(matrix);
+
+    for(int i = 0; i < x; i++){
+        if(matrix[i] != NULL){
+            free(matrix[i]);
+        }
+    }
+    free(matrix);
+}
+
+
+double* transformMatrixToArray(double** matrix, int x, int y){
+    double * array = calloc(x*y, sizeof(double));
+   
+    int cnt = 0;
+    for(int i = 0; i < x; i++){
+        for(int j = 0; j < y; j++){
+            array[cnt++] = matrix[i][j];
+        }
+    }
+
+    return array;
+}
 
 Map* readMapFile(const char* filename, int debug) {
     FILE* fp;
@@ -143,32 +215,12 @@ Parameters* readParameterFile(const char* filename) {
     return params;
 }
 
-/*
-void writeResultMatrix(char* filename, int xsize, int ysize, double** matrix, int debug) {
-    FILE* fp;
-
-    fp = fopen(filename, "wb");
-    if (fp == NULL) {
-        fprintf(stderr, "Unable to open file %s\n", filename);
-        MPI_Finalize();
-        exit(EXIT_FAILURE);
-    }
-
-    fwrite(&xsize, sizeof(xsize), 1, fp);
-    fwrite(&ysize, sizeof(ysize), 1, fp);
-
-    for (int row = ysize - 1; row >= 0; row--) {
-        for (int col = 0; col < xsize; col++) {
-            if (debug == 1) {
-                printf("%lf \n", matrix[col][row]);
-            }
-            fwrite(&matrix[col][row], 8, 1, fp);
-        }
-    }
-
-    fclose(fp);
+void printUsefulMapInformation(Map* map) {
+    printf("X: %d Y: %d\n", map->X, map->Y);
+    printf("a : %lf, b : %lf \n", map->a, map->b);
+    printf("Sampling steps: dx = %lf, dy = %lf\n", map->dx, map->dy);
 }
-*/
+
 void writeResultArray(char* filename, int xsize, int ysize, double* array, int debug) {
     
     FILE* fp = fopen(filename, "wb");
@@ -192,85 +244,37 @@ void writeResultArray(char* filename, int xsize, int ysize, double* array, int d
     fclose(fp);
 }
 
-/*
-void writeTestMap(char* filename, int debug) {
-    FILE* fp;
-
-    fp = fopen(filename, "w");
-    if (fp == NULL) {
-        fprintf(stderr, "Unable to open file %s\n", filename);
-        exit(EXIT_FAILURE);
-    }
-
-    double a = 5;
-    double b = 10;
-    int X = 20;
-    int Y = 10;
-
-    assert(a > 0);
-    assert(b > 0);
-    assert(X > 0);
-    assert(Y > 0);
-
-    fwrite(&a, sizeof(a), 1, fp);
-    fwrite(&b, sizeof(b), 1, fp);
-    fwrite(&X, sizeof(X), 1, fp);
-    fwrite(&Y, sizeof(Y), 1, fp);
-
-    for (int row = 0; row < Y; row++) {
-        for (int col = 0; col < X; col++) {
-            double value = (double) ((double)((Y - row - 1) * X + col)/100);
-            if (debug == 1)
-                printf("%lf \n", value);
-            fwrite(&value, sizeof(value), 1, fp);
-        }
-    }
-
-    fclose(fp);
-}
-*/
-
-/*
-void printGrid(Map* map) {
-    assert(map);
-    for (int i = 0; i < map->X; i++) {
-        for (int j = 0; j < map->Y; j++) {
-            printf("%lf ", map->grid[i][j]);
-        }
-        printf("\n");
-    }
-}
-*/
 
 void getFileNames(char* etaName, char* uName, char* vName, char* dir_name, unsigned int iteration) {
     char* etaPrefix = "eta";
     char* uPrefix = "u";
     char* vPrefix = "v";
 
-    char file_suffix[MAX_FILENAME_SIZE];
-    snprintf(file_suffix, MAX_FILENAME_SIZE, "_%u", iteration);
+    char file_suffix[MAX_FILE_SIZE];
+    snprintf(file_suffix, MAX_FILE_SIZE, "_%u", iteration);
 
-    strncpy(etaName, dir_name, MAX_FILENAME_SIZE);
-    strncat(etaName, etaPrefix, MAX_FILENAME_SIZE);
-    strncat(etaName, file_suffix, MAX_FILENAME_SIZE);
-    strncat(etaName, ".dat", MAX_FILENAME_SIZE);
+    strncpy(etaName, dir_name, MAX_FILE_SIZE);
+    strncat(etaName, etaPrefix, MAX_FILE_SIZE);
+    strncat(etaName, file_suffix, MAX_FILE_SIZE);
+    strncat(etaName, ".dat", MAX_FILE_SIZE);
 
-    strncpy(uName, dir_name, MAX_FILENAME_SIZE);
-    strncat(uName, uPrefix, MAX_FILENAME_SIZE);
-    strncat(uName, file_suffix, MAX_FILENAME_SIZE);
-    strncat(uName, ".dat", MAX_FILENAME_SIZE);
+    strncpy(uName, dir_name, MAX_FILE_SIZE);
+    strncat(uName, uPrefix, MAX_FILE_SIZE);
+    strncat(uName, file_suffix, MAX_FILE_SIZE);
+    strncat(uName, ".dat", MAX_FILE_SIZE);
 
-    strncpy(vName, dir_name, MAX_FILENAME_SIZE);
-    strncat(vName, vPrefix, MAX_FILENAME_SIZE);
-    strncat(vName, file_suffix, MAX_FILENAME_SIZE);
-    strncat(vName, ".dat", MAX_FILENAME_SIZE);
+    strncpy(vName, dir_name, MAX_FILE_SIZE);
+    strncat(vName, vPrefix, MAX_FILE_SIZE);
+    strncat(vName, file_suffix, MAX_FILE_SIZE);
+    strncat(vName, ".dat", MAX_FILE_SIZE);
 }
 
 int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xSize, 
     unsigned int ySize, unsigned int iteration, Parameters* params, int nbproc, int nbthreads) {
 
     static int createDirectory = 0;
-    static char full_path[MAX_FILENAME_SIZE];
+    static char full_path[MAX_FILE_SIZE];
+    
     int status = 0;
 
     // Attempt creating a directory when calling this function for the first time
@@ -278,18 +282,18 @@ int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xS
         createDirectory = 1;
 
         //Get current working directory
-        char current_dir[MAX_FILENAME_SIZE];
-        getcwd(current_dir, MAX_FILENAME_SIZE);
+        char current_dir[MAX_FILE_SIZE];
+        getcwd(current_dir, MAX_FILE_SIZE);
 
         // Get parameter file and remove '.txt' extension
         char* parameter_file = basename((char*)params->filename);
         parameter_file[strlen(parameter_file)-4] = 0; 
         
         // Create output directory
-        char new_dir[MAX_FILENAME_SIZE];
-        snprintf(new_dir, MAX_FILENAME_SIZE, "/Results/matrices_of_%s_%d_%d/", parameter_file, nbproc, nbthreads);
-        strncpy(full_path, current_dir, MAX_FILENAME_SIZE);
-        strncat(full_path, new_dir, MAX_FILENAME_SIZE);
+        char new_dir[MAX_FILE_SIZE];
+        snprintf(new_dir, MAX_FILE_SIZE, "/Results/matrices_of_%s_%d_%d/", parameter_file, nbproc, nbthreads);
+        strncpy(full_path, current_dir, MAX_FILE_SIZE);
+        strncat(full_path, new_dir, MAX_FILE_SIZE);
 
         // Check if file exists, if not, create it.
         if(access(full_path, F_OK) == -1) { 
@@ -304,10 +308,10 @@ int saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int xS
 
     }
     
-    // Create file names
-    char etaFilename[MAX_FILENAME_SIZE];
-    char uFilename[MAX_FILENAME_SIZE];
-    char vFilename[MAX_FILENAME_SIZE];
+    char etaFilename[MAX_FILE_SIZE];
+    char uFilename[MAX_FILE_SIZE];
+    char vFilename[MAX_FILE_SIZE];
+
     getFileNames(etaFilename, uFilename, vFilename, full_path, iteration);
 
     writeResultArray(etaFilename, xSize + 1, ySize + 1, etaTotal, 0);
