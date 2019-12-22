@@ -23,9 +23,15 @@ then
 
     echo "Launching multiprocess_computation.sh"
 
+<<<<<<< HEAD
     for nb_processes in 1
     do
         for nb_threads in 1 2 4 8 10 12 14 16
+=======
+    for nb_processes in 2 4 6 8
+    do
+        for nb_threads in 1 2 4 8
+>>>>>>> master
         do
             # let CPU_MEM="$MAX_MEM_PER_NODE/$nb_processes/$nb_threads"
             # CPU_MEM="${CPU_MEM}G"

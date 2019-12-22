@@ -1,0 +1,2 @@
+Scheme,Process number,Number of processes,Number of threads,Time per process,DeltaX,DeltaY,DeltaT,s,r_threshold
+0,0,1,4,95.817320,4000.000000,1890.000000,0.050000,1,0.000000

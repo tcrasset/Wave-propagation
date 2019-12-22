@@ -28,5 +28,9 @@ serverPath=/home/ulg/info0939/tcrasset/Project2
 
 # Output filename header
 echo "Scheme,Process number,Number of processes,Number of threads,Time per process,DeltaX,DeltaY,DeltaT,s,r_threshold" > $output_filename
+<<<<<<< HEAD
 for ii in $(seq 2 2 $SLURM_NNODES);do sleep 1;echo $ii;srun -n $SLURM_NNODES -N $ii true;done
+=======
+
+>>>>>>> master
 mpirun -np $SLURM_NTASKS $serverPath/waves $serverPath/Parameters/$parameter_file $serverPath/Maps/sriLanka.dat 0 0 0 >> $output_filename
