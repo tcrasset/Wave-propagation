@@ -32,7 +32,7 @@ def contourInput(filename, output_filename):
 	myContourPlot(depth, 'Contour plot input', output_filename)
 
 
-def contourOutput(filename, output_filename):
+def contourOutput(filename, output_filename, title):
 	# Extracting data from mapped data
 	bytes_data = []
 	with open(filename, "rb") as binary_file:
@@ -53,7 +53,7 @@ def contourOutput(filename, output_filename):
 	# Reshape and reverse to have the right orientation
 	depth = depth.reshape(M,N)[::-1]
 
-	myContourPlot(depth, 'Contour plot output', output_filename)
+	myContourPlot(depth, title, output_filename)
 
 def myContourPlot(matrix, title, output_filename):
 	# Plotting
@@ -86,8 +86,8 @@ if __name__=='__main__':
 	# foldername = "matrices_of_mod_space_250_4_4" # Exploded
 	# filename = "eta_40000"	
 
-	foldername = "matrices_of_mod_space_500_4_4" # Exploded
-	filename = "eta_40000"
+	# foldername = "matrices_of_mod_space_500_4_4" # Exploded
+	# filename = "eta_40000"
 
 	# foldername = "matrices_of_mod_space_1000_4_4"
 	# filename = "eta_40000"
@@ -119,17 +119,15 @@ if __name__=='__main__':
 	# foldername = "matrices_of_mod_time_0,001_4_4"
 	# filename = "eta_1500000"
 
-
-
-
-
+	foldername = "matrices_of_sriLanka_implicit_25000"
+	filename = "eta_18"
 
 	dat = ".dat"
 	svg = ".svg"
 	# output_filename = "{}/{}/{}.svg".format(directory, foldername, filename)
 	output_filename = "{}/{}/{}.png".format(directory, foldername, filename)
 	input_filename = "{}/{}/{}.dat".format(directory, foldername, filename)
-	contourOutput(input_filename, output_filename)
+	contourOutput(input_filename, output_filename, filename)
 
 
 
