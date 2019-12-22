@@ -1,6 +1,7 @@
 #ifndef SPARSE_H_
 #define SPARSE_H_
 
+
 typedef struct SparseMatrix_t SparseMatrix;
 typedef struct SparseVector_t SparseVector;
 
