@@ -961,7 +961,7 @@ int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, dou
         */
 
         // Process 0 saves arrays to disk
-        if(params->S != 0 && t % params->S == 0){
+        if(params->S != 0 && t % params->S == 0 && myrank == 0){
             // Save to disk
             saveImplicit(x, xSize, ySize, t, params, nbproc, openMP_nbthreads);
         }
