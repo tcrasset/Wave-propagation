@@ -10,22 +10,9 @@
 
 #include "project2_Delaunoy_Crasset_MAIN.h"
 #include "project2_Delaunoy_Crasset_IO.h"
+#include "project2_Delaunoy_Crasset_IMPLICIT.h"
 
 #define M_PI 3.14159265358979323846
-
-SparseMatrix* toSparseMatrix(double** matrix, int xSize, int ySize){
-
-    for(int i = 0; i < xSize; i++){
-        for (int j = 0; j < ySize; j++){
-            if(matrix[i][j] != 0){
-
-            }
-        }
-        
-    }
-
-}
-
 
 void get_array_sizes(int rank, int nbproc, int xSize, int* size_X, int* size_X_u, int* size_X_h, int* startval_X_h, int* endval_X_h){
     int mpi_xsize = xSize/nbproc;
@@ -638,10 +625,6 @@ inline double vectorNorm(double* x, unsigned int size){
     return norm;
 }
 
-int EulerImplicit(Map* map, Parameters* params, double*** eta, double*** u, double*** v, int debug, int debug_rank){
-
-}
-
 int main(int argc, char* argv[]) {
 
     // Check number of arguments
@@ -730,14 +713,35 @@ int main(int argc, char* argv[]) {
     }
     // Implicit
     else {
-        printf("Implicit ");
-        printf("%s %s %u", parameter_file, map_file, scheme);
+        double* eta;
+        double* u;
+        double* v;
+        if(eulerImplicitMPI(map, params, &eta, &u, &v, debug, debug_rank) == -1){
+            fprintf(stderr, "error in euler function\n");
+            free(params);
+            free(map->grid);
+            free(map);
+            MPI_Finalize();
+            exit(EXIT_FAILURE);
+            
+        }
     }
 
 
     if(debug == 1){
         fprintf(stderr, "before free params\n");
     }
+
+    // Mesure execution time
+    double endTime = MPI_Wtime();
+    double executionTime = endTime - startTime;
+    char* openMP_nbthreads = getenv("OMP_NUM_THREADS");
+    
+    // Print statistics to standard output
+    fprintf(stdout,"%d,%d,%d,%s,%lf,%lf,%lf,%lf,%u,%lf\n", scheme, myrank, nbproc, \
+                openMP_nbthreads, executionTime, params->deltaX, params->deltaY, \
+                params->deltaT, params->s, params->r_threshold);
+
     free(params);
     freeDoubleMatrix(map->grid, map->X,0);
     free(map);
@@ -745,15 +749,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "after free params\n");
     }    
 
-    // Mesure execution time
-    double endTime = MPI_Wtime();
-    double executionTime = endTime - startTime;
-    char* openMP_nbthreads = getenv("OMP_NUM_THREADS");
-
-    // Print statistics to standard output
-    fprintf(stdout,"%d,%d,%d,%s,%lf,%lf,%lf,%lf,%u,%lf\n", scheme, myrank, nbproc, \
-                openMP_nbthreads, executionTime, params->deltaX, params->deltaY, \
-                params->deltaT, params->s, params->r_threshold);
+  
     MPI_Finalize();
 
     return 0;

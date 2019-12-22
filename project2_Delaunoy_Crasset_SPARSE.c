@@ -77,6 +77,9 @@ SparseMatrix* createSparseMatrix(unsigned int begin, unsigned int end, unsigned 
 }
 
 void freeSparseMatrix(SparseMatrix* mat){
+	for(int i = 0; i < mat->end - mat->begin + 1; i++){
+		freeSparseVector(mat->vectors[i]);
+	}
 	free(mat->vectors);
 	free(mat);
 }

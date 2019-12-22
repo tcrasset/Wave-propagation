@@ -10,7 +10,7 @@
 
 #define M_PI 3.14159265358979323846
 
-double dotProduct(double* x, double* y, unsigned int size){
+double myDotProduct(double* x, double* y, unsigned int size){
     //fprintf(stderr, "dot product \n");
     double result = 0.0;
 
@@ -22,7 +22,7 @@ double dotProduct(double* x, double* y, unsigned int size){
     return result;
 }
 
-double vectorNorm(double* x, unsigned int size){
+double myVectorNorm(double* x, unsigned int size){
     double norm = 0.0;
 
     for(unsigned int i = 0; i < size; i++){
@@ -98,7 +98,7 @@ double* conjugateGradient(double** A, double* b, unsigned int size, double rThre
         rCurr[i] = b[i]; // No need to add Ax_0 term as x_0 = 0
     }
 
-    double rBaseNorm = vectorNorm(rCurr, size);
+    double rBaseNorm = myVectorNorm(rCurr, size);
 
     // Initialise p
     for(unsigned int i = 0; i < size; i++){
@@ -120,12 +120,12 @@ double* conjugateGradient(double** A, double* b, unsigned int size, double rThre
 
         fprintf(stderr, "Ap =");
         for(unsigned int i = 0; i < size; i++){
-            Ap[i] = dotProduct(A[i], pCurr, size);
+            Ap[i] = myDotProduct(A[i], pCurr, size);
             fprintf(stderr, " %lf", Ap[i]);
         }
         fprintf(stderr, "\n");
 
-        alpha = rCurrNorm/dotProduct(pCurr, Ap, size);
+        alpha = rCurrNorm/myDotProduct(pCurr, Ap, size);
 
         fprintf(stderr, "alpha = %lf\n", alpha);
 
@@ -145,7 +145,7 @@ double* conjugateGradient(double** A, double* b, unsigned int size, double rThre
         }
         fprintf(stderr, "\n");
 
-        rNextNorm = vectorNorm(rNext, size);
+        rNextNorm = myVectorNorm(rNext, size);
         // Compute beta
         beta = rNextNorm/rCurrNorm;
         fprintf(stderr, "beta = %lf\n", beta);
@@ -252,7 +252,7 @@ double* sparseConjugateGradient(SparseMatrix* A, double* b, unsigned int size, d
         rCurr[i] = b[i]; // No need to add Ax_0 term as x_0 = 0
     }
 
-    double rBaseNorm = vectorNorm(rCurr, size);
+    double rBaseNorm = myVectorNorm(rCurr, size);
 
     // Initialise p
     for(unsigned int i = 0; i < size; i++){
@@ -279,7 +279,7 @@ double* sparseConjugateGradient(SparseMatrix* A, double* b, unsigned int size, d
         }
         fprintf(stderr, "\n");
 
-        alpha = rCurrNorm/dotProduct(pCurr, Ap, size);
+        alpha = rCurrNorm/myDotProduct(pCurr, Ap, size);
 
         fprintf(stderr, "alpha = %lf\n", alpha);
 
@@ -299,7 +299,7 @@ double* sparseConjugateGradient(SparseMatrix* A, double* b, unsigned int size, d
         }
         fprintf(stderr, "\n");
 
-        rNextNorm = vectorNorm(rNext, size);
+        rNextNorm = myVectorNorm(rNext, size);
         // Compute beta
         beta = rNextNorm/rCurrNorm;
         fprintf(stderr, "beta = %lf\n", beta);
@@ -413,7 +413,7 @@ double* MPISparseConjugateGradient(SparseMatrix* A, double* b, unsigned int size
         return NULL;
     }
 
-    double* tmpBuff = malloc((startIndex - endIndex + 1) *sizeof(double));
+    double* tmpBuff = malloc((endIndex - startIndex + 1) *sizeof(double));
     //double* tmpBuff = malloc(3 *sizeof(double));
     if(!tmpBuff){
         free(xCurr);
@@ -493,6 +493,7 @@ double* MPISparseConjugateGradient(SparseMatrix* A, double* b, unsigned int size
         rCurrNorm = rNextNorm;
     }
 
+    free(tmpBuff);
     free(xNext);
     free(rCurr);
     free(rNext);
@@ -518,14 +519,24 @@ void BuildSystemMatrix(SparseMatrix** A, double** b, double* result, unsigned in
     int vBegin = uBegin + (xSize + 2) * (ySize + 1);
     int vEnd = vBegin + (xSize + 1) * (ySize + 2) - 1;
 
-    fprintf(stderr, "start = %u\n", start);
-    fprintf(stderr, "end = %u\n", end);
-
     *A = createSparseMatrix(start, end, 5);
     *b = malloc((vEnd + 1) * sizeof(double));
 
     initAtb(*A, *b, result, start, end, xSize, ySize, h, params, t);
+    /*
+    printSparseMatrix(*A);
+    fprintf(stderr, "b init\n");
+    for(int i = 0; i <= vEnd; i++){
+        fprintf(stderr, "%lf\n", (*b)[i]);
+    }
+    */
     makeDefinitePositive(A, b, result, start, end, xSize, ySize, h, params, t);
+    /*
+    fprintf(stderr, "b positive\n");
+    for(int i = 0; i <= vEnd; i++){
+        fprintf(stderr, "%lf\n", (*b)[i]);
+    }
+    */
 }
 
 void makeDefinitePositive(SparseMatrix** At, double** b, double* result, unsigned int start, unsigned int end, int xSize, int ySize, double** h, Parameters* params, double t){
@@ -619,6 +630,7 @@ void makeDefinitePositive(SparseMatrix** At, double** b, double* result, unsigne
     }
 
     freeSparseMatrix(*At);
+    freeSparseVector(vec);
     free(*b);
     *At = AtA;
     *b = Atb;
@@ -858,11 +870,15 @@ void initAtb(SparseMatrix* A, double* b, double* result, unsigned int start, uns
     }
 }
 
-void save_inputs(double* x, int xSize, int ySize){
+void saveImplicit(double* x, int xSize, int ySize, unsigned int iteration, Parameters* params){
 
+    int uBegin = (xSize + 1) * (ySize + 1);
+    int vBegin = uBegin + (xSize + 2) * (ySize + 1);
+
+    saveToDisk(x, x + uBegin, x + vBegin, xSize, ySize, iteration, params);
 }
 
-int eulerImplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, double*** v, int debug, int debug_rank){
+int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, double** v, int debug, int debug_rank){
     assert(map);
     assert(params);
 
@@ -893,21 +909,6 @@ int eulerImplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         return -1;
     }
 
-    SparseMatrix* A = createSparseMatrix(inputSize, inputSize, 5);
-    if(!A){
-        free(x);
-        freeDoubleMatrix(h, 2 * xSize + 3, 0);
-        return -1;
-    }
-    
-    double* b = malloc(inputSize * sizeof(double));
-    if(!b){
-        free(x);
-        freeDoubleMatrix(h, 2 * xSize + 3, 0);
-        freeSparseMatrix(A);
-        return -1;
-    }
-
     for(int i = 0; i < 2 * xSize + 3; i++){
         for(int j = 0; j < 2 * ySize + 3; j++){
             h[i][j] = getGridValueAtDomainCoordinates(map, ((float)(i * xSize)/(xSize + 1)) * (params->deltaX / 2), ((float)(j * ySize)/(ySize + 1)) * (params->deltaY / 2));
@@ -925,9 +926,9 @@ int eulerImplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         free(x);
         unsigned int tmpStart, tmpEnd;
         int* recvcounts = malloc(nbproc * sizeof(int));
-        int* displs = malloc(nbproc * sizeof(int))
+        int* displs = malloc(nbproc * sizeof(int));
         displs[0] = 0;
-        for(unsigned int k; k < nbproc; k++){
+        for(unsigned int k = 0; k < nbproc; k++){
             get_indices(nbproc, k, inputSize, &tmpStart, &tmpEnd);
             int tmpSize = tmpEnd - tmpStart + 1;
             recvcounts[k] = tmpSize;
@@ -936,10 +937,54 @@ int eulerImplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         }
        
         double rThresh = params->r_threshold;
+        /*
+        if(myrank == 0){
+            printSparseMatrix(A);
+            fprintf(stderr, "b:\n");
+            for(int i = 0; i < inputSize; i++)
+                fprintf(stderr, "%lf\n", b[i]);
+        }
+        */
         x = MPISparseConjugateGradient(A, b, inputSize, rThresh, nbproc, myrank, start, end, recvcounts, displs);
+        
+        /*
+        if(myrank == 1){
+            fprintf(stderr, "x");
+            for(int i = 0; i < inputSize; i++)
+                fprintf(stderr, "%lf\n", x[i]);
+        }
+        */
 
-        // faire les saves
+        // Process 0 saves arrays to disk
+        if(params->S != 0 && t % params->S == 0){
+            // Save to disk
+            saveImplicit(x, xSize, ySize, t, params);
+        }
+
+        free(recvcounts);
+        free(displs);
+        freeSparseMatrix(A);
+        free(b);
     }
 
-    // assigner eta, u et v
+    freeDoubleMatrix(h, 2*xSize+3, 0);
+
+    saveImplicit(x, xSize, ySize, params->TMax/params->deltaT, params);
+
+    int uBegin = (xSize + 1) * (ySize + 1);
+    int vBegin = uBegin + (xSize + 2) * (ySize + 1);
+
+    *eta = x;
+    *u = x + uBegin;
+    *v = x + vBegin;
+
+    if(myrank == 0){
+        fprintf(stderr,"***********ETA**************\n");
+        printLinearArray(*eta, xSize + 1, ySize + 1);
+        fprintf(stderr,"***********U**************\n");
+        printLinearArray(*u, xSize + 2, ySize + 1);
+        fprintf(stderr,"***********V**************\n");
+        printLinearArray(*v, xSize + 1, ySize + 2);
+    }
+    return 0;
 }

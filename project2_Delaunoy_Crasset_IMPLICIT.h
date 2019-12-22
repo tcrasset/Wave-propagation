@@ -16,6 +16,6 @@ void initAtb(SparseMatrix* A, double* b, double* result, unsigned int start, uns
 void makeDefinitePositive(SparseMatrix** At, double** b, double* result, unsigned int start, unsigned int end, int xSize, int ySize, double** h, Parameters* params, double t);
 void BuildSystemMatrix(SparseMatrix** A, double** b, double* result, unsigned int start, unsigned int end, int xSize, int ySize, double** h, Parameters* params, double t);
 void save_inputs(double* x, int xSize, int ySize);
-int eulerImplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, double*** v, int debug, int debug_rank);
+int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, double** v, int debug, int debug_rank);
 
 #endif
