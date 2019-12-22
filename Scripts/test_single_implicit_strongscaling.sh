@@ -1,11 +1,7 @@
 #!/bin/bash
 # Submission script for NIC4
 #SBATCH --job-name=TestRun
-<<<<<<< HEAD
-#SBATCH --time=00:10:00 # hh:mm:ss
-=======
-#SBATCH --time=02:00:00 # hh:mm:ss
->>>>>>> implicit
+#SBATCH --time=00:30:00 # hh:mm:ss
 #
 #SBATCH --mem-per-cpu=250 # megabytes
 #SBATCH --partition=defq
@@ -25,10 +21,10 @@ export MKL_NUM_THREADS=$SLURM_NTASKS
 serverPath=/home/ulg/info0939/tcrasset/Project2
 ##############################################
 
-parameter_file=sriLanka_implicit_25000.txt
+parameter_file=sriLanka_implicit_strongscaling.txt
 map_file=sriLanka.dat
 TIMESTAMP=`date +%Y-%m-%d_%H-%M-%S`
-output_filename="$serverPath/Results/statistics_strongscaling_implicit_1000_it_$SLURM_NTASKS-$SLURM_CPUS_PER_TASK-on-$TIMESTAMP"
+output_filename="$serverPath/Results/statistics_strongscaling_implicit_100_it_$SLURM_NTASKS-$SLURM_CPUS_PER_TASK-on-$TIMESTAMP"
 
 for ii in $(seq 2 2 $SLURM_NNODES);do sleep 1;echo $ii;srun -n $SLURM_NNODES -N $ii true;done
 
