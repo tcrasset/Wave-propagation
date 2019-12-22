@@ -116,8 +116,8 @@ if __name__=='__main__':
 	# foldername = "matrices_of_mod_time_0,05_4_4"
 	# filename = "eta_40000"
 
-	foldername = "matrices_of_mod_time_0,001_4_4"
-	filename = "eta_1500000"
+	foldername = "matrices_of_sriLanka_implicit_25000_1_1"
+	filename = "eta_1"
 
 
 	dat = ".dat"
