@@ -17,26 +17,15 @@
 int main(int argc, char* argv[]) {
 
     // Check number of arguments
-    int debug, debug_rank;
     assert(argc >= 4);
     const char* parameter_file = argv[1];
     const char* map_file = argv[2];
     const unsigned int scheme = atoi(argv[3]);
 
-    if(argc == 4)
-        debug = 0;
-    else if(argc == 5){
-        fprintf(stderr, "Call with rank of process to debug as 6th argument \n");
-        return -1;
-    }else{
-        assert(argc == 6);
-        debug = atoi(argv[4]);
-        debug_rank = atoi(argv[5]);
-    }
-
     //Check argument validity
     assert((scheme == 0) || (scheme == 1));
 
+    // Init MPI
     int nbproc, myrank;
     int provided;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
@@ -49,11 +38,9 @@ int main(int argc, char* argv[]) {
     // Measure execution time
     double startTime = MPI_Wtime();
 
+    // Read parameters and map
     Parameters* params = readParameterFile(parameter_file);
     Map* map = readMapFile(map_file);
-
-    fprintf(stderr, "map->a = %lf", map->a);
-    fprintf(stderr, "map->b = %lf", map->b);
 
     // Explicit
     if (scheme == 0) {
@@ -61,7 +48,7 @@ int main(int argc, char* argv[]) {
         double** u;
         double** v;
 
-        int status = eulerExplicitMPI(map, params, &eta, &u, &v, debug, debug_rank);
+        int status = eulerExplicitMPI(map, params, &eta, &u, &v);
         if(status == -1){
             fprintf(stderr, "Error in euler function\n");
             free(params);
@@ -77,7 +64,7 @@ int main(int argc, char* argv[]) {
         double* eta;
         double* u;
         double* v;
-        if(eulerImplicitMPI(map, params, &eta, &u, &v, debug, debug_rank) == -1){
+        if(eulerImplicitMPI(map, params, &eta, &u, &v) == -1){
             fprintf(stderr, "error in euler function\n");
             free(params);
             free(map->grid);

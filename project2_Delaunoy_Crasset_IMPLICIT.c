@@ -600,7 +600,7 @@ void saveImplicit(double* x, int xSize, int ySize, unsigned int iteration, Param
  * Returns:
  * A integer indicating whether the function executed successfully
  */
-int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, double** v, int debug, int debug_rank){
+int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, double** v){
     
     // Assert arugments
     assert(map);
