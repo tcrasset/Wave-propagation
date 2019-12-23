@@ -404,6 +404,22 @@ void saveToDisk(double* etaTotal, double* uTotal, double* vTotal, unsigned int x
         strncpy(full_path, current_dir, MAX_FILENAME_SIZE);
         strncat(full_path, new_dir, MAX_FILENAME_SIZE);
 
+        char* result_dir = "/Results";
+        char intermediate_dir[MAX_FILENAME_SIZE];
+        strncpy(intermediate_dir, current_dir, MAX_FILENAME_SIZE);
+        strncat(intermediate_dir, result_dir, MAX_FILENAME_SIZE);
+
+        // Check if file exists, if not, create it.
+        if(access(intermediate_dir, F_OK) == -1) { 
+            status = mkdir(intermediate_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            if(status == -1){
+                fprintf(stderr, "Error in saveToDisk = %s\n" , strerror(errno));
+                fprintf(stderr, "Attempted to create: %s\n" , full_path);
+                MPI_Finalize();
+                exit(EXIT_FAILURE);
+            }
+        }
+
         // Check if file exists, if not, create it.
         if(access(full_path, F_OK) == -1) { 
             status = mkdir(full_path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);

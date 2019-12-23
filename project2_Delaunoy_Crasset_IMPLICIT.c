@@ -155,7 +155,7 @@ double* MPISparseConjugateGradient(SparseMatrix* A, double* b, unsigned int size
     
     // Loop until convergence reached
     while(rCurrNorm / rBaseNorm >= rThresh){
-    
+        
         // Compute alpha
 
         MPIMatVecMul(A, pCurr, tmpBuff, Ap, startIndex, endIndex, myrank, nbproc, recvcounts, displs);
