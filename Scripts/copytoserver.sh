@@ -22,6 +22,8 @@ scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_IO.c $user@$server:$serverPa
 scp -i $rsaPath $homePath/project2_Delaunoy_Crasset_IO.h $user@$server:$serverPath
 
 # Scripts
+scp -i $rsaPath $homePath/Scripts/namesOfParameterFiles.txt $user@$server:$serverPath/Scripts
+
 scp -i $rsaPath $homePath/Scripts/test_computing_configuration.sh $user@$server:$serverPath/Scripts
 scp -i $rsaPath $homePath/Scripts/test_parameter_file.sh $user@$server:$serverPath/Scripts
 scp -i $rsaPath $homePath/Scripts/test_single_implicit_weakscaling_processes.sh $user@$server:$serverPath/Scripts
@@ -42,6 +44,11 @@ scp -i $rsaPath $homePath/Scripts/test_multiple_explicit_strongscaling_processes
 scp -i $rsaPath $homePath/Scripts/test_multiple_explicit_strongscaling_threads.sh $user@$server:$serverPath/Scripts
 scp -i $rsaPath $homePath/Scripts/test_multiple_explicit_weakscaling_processes.sh $user@$server:$serverPath/Scripts
 scp -i $rsaPath $homePath/Scripts/test_single_explicit_strongscaling.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_implicit_alone.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_implicit.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_explicit.sh $user@$server:$serverPath/Scripts
+scp -i $rsaPath $homePath/Scripts/test_explicit_alone.sh $user@$server:$serverPath/Scripts
+
 
 
 # Parameters
@@ -61,6 +68,8 @@ scp -i $rsaPath $homePath/Scripts/test_single_explicit_strongscaling.sh $user@$s
 
 scp -i $rsaPath $homePath/Parameters/sriLanka_strongscaling.txt $user@$server:$serverPath/Parameters
 scp -i $rsaPath $homePath/Parameters/sriLanka_implicit_strongscaling.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Parameters/sriLanka_implicit_result.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Parameters/sriLanka_explicit_result.txt $user@$server:$serverPath/Parameters
 
 
 # scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/threads/explicit_threads_1-params_sriLanka.txt $user@$server:$serverPath/Parameters
@@ -111,6 +120,25 @@ scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/process/implici
 # scp -i $rsaPath $homePath/Parameters/mod_space_1000.txt $user@$server:$serverPath/Parameters
 # scp -i $rsaPath $homePath/Parameters/mod_space_10000.txt $user@$server:$serverPath/Parameters
 # scp -i $rsaPath $homePath/Parameters/mod_time_0,05.txt $user@$server:$serverPath/Parameters
-# scp -i $rsaPath $homePath/Parameters/mod_space_500.txt $user@$server:$serverPath/Parameters
-# scp -i $rsaPath $homePath/Parameters/mod_space_250.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Parameters/mod_space_250.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Parameters/mod_space_500.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Parameters/mod_space_525.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Parameters/mod_space_550.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Parameters/mod_space_575.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Parameters/mod_space_600.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Parameters/mod_space_700.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Parameters/mod_space_800.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Parameters/mod_space_900.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Parameters/mod_time_0,09.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Parameters/mod_time_0,08.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Parameters/mod_time_0,07.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Parameters/mod_time_0,06.txt $user@$server:$serverPath/Parameters
 
+# scp -i $rsaPath $homePath/Parameters/mod_time_0,9.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Parameters/mod_time_0,8.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Parameters/mod_time_0,7.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Parameters/mod_time_0,6.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Parameters/mod_time_0,5.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Parameters/mod_time_0,4.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Parameters/mod_time_0,3.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Parameters/mod_time_0,2.txt $user@$server:$serverPath/Parameters

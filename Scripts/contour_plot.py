@@ -116,8 +116,61 @@ if __name__=='__main__':
 	# foldername = "matrices_of_mod_time_0,05_4_4"
 	# filename = "eta_40000"
 
-	foldername = "matrices_of_sriLanka_implicit_25000_1_1"
-	filename = "eta_1"
+	# foldername = "matrices_of_sriLanka_implicit_25000_1_1"
+	# filename = "eta_1"
+	
+	directory = "/home/tom/Documents/Uliege/Master2/HPC/Project2/Results"
+	
+	# foldername = 'matrices_of_mod_space_600_4_4'
+	# filename = "eta_20000"
+
+	# foldername = 'matrices_of_mod_space_700_4_4'
+	# filename = "eta_20000"
+
+	# foldername = 'matrices_of_mod_space_800_4_4'
+	# filename = "eta_20000"
+
+	# foldername = 'matrices_of_mod_space_900_4_4'
+	# filename = "eta_20000"
+
+	# foldername = 'matrices_of_mod_time_0,06_4_4'
+	# filename = "eta_40000"
+
+	# foldername = 'matrices_of_mod_time_0,07_4_4'
+	# filename = "eta_40000"
+
+	# foldername = 'matrices_of_mod_time_0,08_4_4'
+	# filename = "eta_40000"
+
+	# foldername = 'matrices_of_mod_time_0,09_4_4'
+	# filename = "eta_40000"
+
+
+	# foldername = 'matrices_of_mod_time_0,2_4_4'
+	# filename = "eta_10000"
+
+	# foldername = 'matrices_of_mod_time_0,3_4_4' # Start exploding
+	# filename = "eta_6665"
+
+	# foldername = 'matrices_of_mod_time_0,4_4_4' # EXPLODED
+	# filename = "eta_5000"
+
+	directory = "/home/tom/Documents/Uliege/Master2/HPC/Project2/Results/NEW"
+
+	# foldername = 'matrices_of_mod_space_500_4_4'
+	# filename = "eta_20000"
+
+	# foldername = 'matrices_of_mod_space_525_4_4'
+	# filename = "eta_20000"
+
+	# foldername = 'matrices_of_mod_space_550_4_4'
+	# filename = "eta_20000"
+
+	# foldername = 'matrices_of_mod_space_575_4_4'
+	# filename = "eta_20000"
+
+	foldername = 'matrices_of_mod_space_600_4_4'
+	filename = "eta_20000"
 
 
 	dat = ".dat"

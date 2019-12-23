@@ -1,7 +1,7 @@
 #!/bin/bash
 # Submission script for NIC4
 #SBATCH --job-name=TestRun
-#SBATCH --time=00:10:00 # hh:mm:ss
+#SBATCH --time=00:30:00 # hh:mm:ss
 #
 #SBATCH --mem-per-cpu=250 # megabytes
 #SBATCH --partition=defq
@@ -24,7 +24,7 @@ serverPath=/home/ulg/info0939/tcrasset/Project2
 parameter_file=implicit_threads_$SLURM_CPUS_PER_TASK-params_sriLanka.txt
 map_file=sriLanka.dat
 TIMESTAMP=`date +%Y-%m-%d_%H-%M-%S`
-output_filename="$serverPath/Results/statistics_implicit_weakscaling_threads_$SLURM_NTASKS-$SLURM_CPUS_PER_TASK-on-$TIMESTAMP"
+output_filename="$serverPath/Results/statistics_implicit_weakscaling_correct_threads_$SLURM_NTASKS-$SLURM_CPUS_PER_TASK-on-$TIMESTAMP"
 
 for ii in $(seq 2 2 $SLURM_NNODES);do sleep 1;echo $ii;srun -n $SLURM_NNODES -N $ii true;done
 

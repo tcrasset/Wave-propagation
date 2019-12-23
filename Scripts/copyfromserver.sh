@@ -20,6 +20,21 @@ ssh-add $rsaPath
 # scp -i $rsaPath $user@$server:$serverPath/Results/statistics_for_weakscaling_threads* $homePath/Results
 # scp -i $rsaPath $user@$server:$serverPath/Results/statistics_strongscaling_explicit_10000_it* $homePath/Report/stats/strongscaling
 # scp -i $rsaPath $user@$server:$serverPath/Results/statistics_explicit_weakscaling_* $homePath/Report/stats/weakscaling
-scp -i $rsaPath $user@$server:$serverPath/Results/statistics_strongscaling_implicit* $homePath/Report/stats/strongscaling/implicit
+# scp -i $rsaPath $user@$server:$serverPath/Results/statistics_strongscaling_implicit* $homePath/Report/stats/strongscaling/implicit/NEW2
+# scp -i $rsaPath $user@$server:$serverPath/Results/statistics_implicit_weakscaling* $homePath/Report/stats/weakscaling/implicit
+# scp -i $rsaPath $user@$server:$serverPath/Results/statistics_implicit_weakscaling_correct_processes* $homePath/Report/stats/weakscaling/implicit/
+# scp -i $rsaPath $user@$server:$serverPath/Results/statistics_implicit_weakscaling_correct_threads* $homePath/Report/stats/weakscaling/implicit
+# scp -i $rsaPath $user@$server:$serverPath/Results/statistics_strongscaling_implicit_correct_1* $homePath/Report/stats/strongscaling/implicit/threads
+# scp -i $rsaPath $user@$server:$serverPath/Results/statistics_strongscaling_implicit_correct* $homePath/Report/stats/strongscaling/implicit/process
 
-# scp -i $rsaPath $user@$server:$serverPath/Results/mod_matrices.zip $homePath/Results
+# scp -i $rsaPath $user@$server:$serverPath/Results/implicit_matrices_results.zip $homePath/Results
+# scp -i $rsaPath $user@$server:$serverPath/Results/modspace_matrices.zip $homePath/Results
+# scp -i $rsaPath $user@$server:$serverPath/Results/modtime_matrices.zip $homePath/Results
+# scp -i $rsaPath $user@$server:$serverPath/Results/modtime_bis_matrices.zip $homePath/Results
+# scp -i $rsaPath $user@$server:$serverPath/Results/modspace_bis_matrices.zip $homePath/Results
+scp -i $rsaPath $user@$server:$serverPath/Results/mod_space_matrices_bisbis.zip $homePath/Results
+
+
+# Implicit vs explicit comparison
+# scp -i $rsaPath $user@$server:$serverPath/Results/matrices_of_sriLanka_explicit_result_16_1/eta_20000.dat $homePath/Results/comparison
+
