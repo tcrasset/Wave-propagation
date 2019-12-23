@@ -690,7 +690,7 @@ int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, dou
     }
 
     // free depth at rest matrix
-    freeDoubleMatrix(h, 2*xSize+3, 0);
+    freeDoubleMatrix(h, 2*xSize+3);
 
     // Save last iteration solution
     if(params->S != 0 && ((int) (params->TMax/params->deltaT) % params->S) == 0 && myrank == 0){

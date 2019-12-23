@@ -194,55 +194,55 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
 
     double** etaNext = allocateDoubleMatrix(size_X, ySize + 1);
     if(!etaNext){
-        freeDoubleMatrix(etaCurr, size_X,0);
+        freeDoubleMatrix(etaCurr, size_X);
         return -1;
     }
 
     // u in {-1/2, 1/2, ..., a/dx + 1/2}X{0, 1, ..., b/dy}
     double** uCurr = allocateDoubleMatrix(size_X_u, ySize + 1);
     if(!uCurr){
-        freeDoubleMatrix(etaCurr,size_X,0);
-        freeDoubleMatrix(etaNext,size_X,0);
+        freeDoubleMatrix(etaCurr,size_X);
+        freeDoubleMatrix(etaNext,size_X);
         return -1;
     }
 
     double** uNext = allocateDoubleMatrix(size_X_u, ySize + 1);
     if(!uNext){
-        freeDoubleMatrix(etaCurr,size_X,0);
-        freeDoubleMatrix(etaNext,size_X,0);
-        freeDoubleMatrix(uCurr, size_X_u,0);
+        freeDoubleMatrix(etaCurr,size_X);
+        freeDoubleMatrix(etaNext,size_X);
+        freeDoubleMatrix(uCurr, size_X_u);
         return -1;
     }
 
     // v in {0, 1, .., a/dx}X{-1/2, 1/2, ..., b/dy + 1/2}
     double** vCurr = allocateDoubleMatrix(size_X, ySize + 2);
     if(!vCurr){
-        freeDoubleMatrix(etaCurr, size_X,0);
-        freeDoubleMatrix(etaNext, size_X,0);
-        freeDoubleMatrix(uCurr, size_X_u,0);
-        freeDoubleMatrix(uNext, size_X_u,0);
+        freeDoubleMatrix(etaCurr, size_X);
+        freeDoubleMatrix(etaNext, size_X);
+        freeDoubleMatrix(uCurr, size_X_u);
+        freeDoubleMatrix(uNext, size_X_u);
         return -1;
     }
 
     double** vNext = allocateDoubleMatrix(size_X, ySize + 2);
     if(!vNext){
-        freeDoubleMatrix(etaCurr, size_X,0);
-        freeDoubleMatrix(etaNext, size_X,0);
-        freeDoubleMatrix(uCurr, size_X_u,0);
-        freeDoubleMatrix(uNext, size_X_u,0);
-        freeDoubleMatrix(vCurr, size_X,0);
+        freeDoubleMatrix(etaCurr, size_X);
+        freeDoubleMatrix(etaNext, size_X);
+        freeDoubleMatrix(uCurr, size_X_u);
+        freeDoubleMatrix(uNext, size_X_u);
+        freeDoubleMatrix(vCurr, size_X);
         return -1;
     }
     
     // h in {-1/2, 0, 1/2, ..., a/dx, a/dx + 1/2}X{-1/2, 0, 1/2, ..., b/dy, b/dy + 1/2}
     double** h = allocateDoubleMatrix(size_X_h, 2 * ySize + 3);
     if(!h){
-        freeDoubleMatrix(etaCurr, size_X,0);
-        freeDoubleMatrix(etaNext, size_X,0);
-        freeDoubleMatrix(uCurr, size_X_u,0);
-        freeDoubleMatrix(uNext, size_X_u,0);
-        freeDoubleMatrix(vCurr, size_X,0);
-        freeDoubleMatrix(vNext, size_X,0);
+        freeDoubleMatrix(etaCurr, size_X);
+        freeDoubleMatrix(etaNext, size_X);
+        freeDoubleMatrix(uCurr, size_X_u);
+        freeDoubleMatrix(uNext, size_X_u);
+        freeDoubleMatrix(vCurr, size_X);
+        freeDoubleMatrix(vNext, size_X);
         return -1;
     }
 
@@ -468,10 +468,10 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     *u = uCurr;
     *v = vCurr;
     
-    freeDoubleMatrix(etaNext, size_X,0);
-    freeDoubleMatrix(uNext, size_X_u,0);
-    freeDoubleMatrix(vNext, size_X,0);
-    freeDoubleMatrix((double**) h, size_X_h,0);
+    freeDoubleMatrix(etaNext, size_X);
+    freeDoubleMatrix(uNext, size_X_u);
+    freeDoubleMatrix(vNext, size_X);
+    freeDoubleMatrix((double**) h, size_X_h);
     
     free(uReceived);
     free(etaReceived);

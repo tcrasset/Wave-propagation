@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
     double startTime = MPI_Wtime();
 
     Parameters* params = readParameterFile(parameter_file);
-    Map* map = readMapFile(map_file, 0);
+    Map* map = readMapFile(map_file);
 
     fprintf(stderr, "map->a = %lf", map->a);
     fprintf(stderr, "map->b = %lf", map->b);
