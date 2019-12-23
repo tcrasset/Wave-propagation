@@ -674,9 +674,9 @@ int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, dou
     }
 
     freeDoubleMatrix(h, 2*xSize+3, 0);
-
-    saveImplicit(x, xSize, ySize, params->TMax/params->deltaT, params, nbproc, openMP_nbthreads);
-
+    if(params->S != 0 && ((int) (params->TMax/params->deltaT) % params->S) == 0 && myrank == 0){
+        saveImplicit(x, xSize, ySize, params->TMax/params->deltaT, params, nbproc, openMP_nbthreads);
+    }
     int uBegin = (xSize + 1) * (ySize + 1);
     int vBegin = uBegin + (xSize + 2) * (ySize + 1);
 

@@ -60,26 +60,46 @@ scp -i $rsaPath $homePath/Scripts/test_single_explicit_strongscaling.sh $user@$s
 # scp -i $rsaPath $homePath/Parameters/threads_16-params_sriLanka.txt $user@$server:$serverPath/Parameters
 
 scp -i $rsaPath $homePath/Parameters/sriLanka_strongscaling.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Parameters/sriLanka_implicit_25000.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Parameters/sriLanka_implicit_strongscaling.txt $user@$server:$serverPath/Parameters
 
 
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/threads/explicit_threads_1-params_sriLanka.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/threads/explicit_threads_2-params_sriLanka.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/threads/explicit_threads_4-params_sriLanka.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/threads/explicit_threads_8-params_sriLanka.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/threads/explicit_threads_10-params_sriLanka.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/threads/explicit_threads_12-params_sriLanka.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/threads/explicit_threads_14-params_sriLanka.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/threads/explicit_threads_16-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/threads/explicit_threads_1-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/threads/explicit_threads_2-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/threads/explicit_threads_4-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/threads/explicit_threads_8-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/threads/explicit_threads_10-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/threads/explicit_threads_12-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/threads/explicit_threads_14-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/threads/explicit_threads_16-params_sriLanka.txt $user@$server:$serverPath/Parameters
 
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/process/explicit_process_1-params_sriLanka.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/process/explicit_process_2-params_sriLanka.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/process/explicit_process_4-params_sriLanka.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/process/explicit_process_8-params_sriLanka.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/process/explicit_process_10-params_sriLanka.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/process/explicit_process_12-params_sriLanka.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/process/explicit_process_14-params_sriLanka.txt $user@$server:$serverPath/Parameters
-scp -i $rsaPath $homePath/Report/Parameters/weakscaling/process/explicit_process_16-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/process/explicit_process_1-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/process/explicit_process_2-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/process/explicit_process_4-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/process/explicit_process_8-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/process/explicit_process_10-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/process/explicit_process_12-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/process/explicit_process_14-params_sriLanka.txt $user@$server:$serverPath/Parameters
+# scp -i $rsaPath $homePath/Report/Parameters/weakscaling/explicit/process/explicit_process_16-params_sriLanka.txt $user@$server:$serverPath/Parameters
+
+
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/threads/implicit_threads_1-params_sriLanka.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/threads/implicit_threads_2-params_sriLanka.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/threads/implicit_threads_4-params_sriLanka.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/threads/implicit_threads_8-params_sriLanka.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/threads/implicit_threads_10-params_sriLanka.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/threads/implicit_threads_12-params_sriLanka.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/threads/implicit_threads_14-params_sriLanka.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/threads/implicit_threads_16-params_sriLanka.txt $user@$server:$serverPath/Parameters
+
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/process/implicit_process_1-params_sriLanka.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/process/implicit_process_2-params_sriLanka.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/process/implicit_process_4-params_sriLanka.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/process/implicit_process_8-params_sriLanka.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/process/implicit_process_10-params_sriLanka.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/process/implicit_process_12-params_sriLanka.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/process/implicit_process_14-params_sriLanka.txt $user@$server:$serverPath/Parameters
+scp -i $rsaPath $homePath/Report/Parameters/weakscaling/implicit/process/implicit_process_16-params_sriLanka.txt $user@$server:$serverPath/Parameters
+
 
 # scp -i $rsaPath $homePath/Parameters/mod_time_0,01.txt $user@$server:$serverPath/Parameters
 # scp -i $rsaPath $homePath/Parameters/mod_space_2000.txt $user@$server:$serverPath/Parameters
