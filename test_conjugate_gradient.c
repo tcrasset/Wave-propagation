@@ -5,6 +5,7 @@
 #include "project2_Delaunoy_Crasset_IMPLICIT.h"
 #include "project2_Delaunoy_Crasset_SPARSE.h"
 
+/*
 void test_conjugate(){
 	double** A = malloc(3*sizeof(double*));
 	for(int i = 0; i < 3; i++){
@@ -31,7 +32,9 @@ void test_conjugate(){
 
 	fprintf(stderr, "x = %lf\n y = %lf\n z = %lf\n", x[0], x[1], x[2]);
 }
+*/
 
+/*
 void test_sparse_conjugate(){
 	SparseMatrix* A = createSparseMatrix(3, 3, 9);
 
@@ -54,6 +57,7 @@ void test_sparse_conjugate(){
 	double* x = sparseConjugateGradient(A, b, 3, 0.00001);
 	fprintf(stderr, "x = %lf\n y = %lf\n z = %lf\n", x[0], x[1], x[2]);
 }
+*/
 
 void test_mpi_dot_product(int argc, char* argv[]){
 	MPI_Init(&argc,&argv);
@@ -118,13 +122,13 @@ void test_mpi_mat_vec_mul(int argc, char* argv[]){
 	if(myrank == 0){
 		SparseMatrix* A = createSparseMatrix(0, 1, 5);
 
-		sparseInsertElement(A, 0, 0, 1);
-		sparseInsertElement(A, 0, 1, 2);
 		sparseInsertElement(A, 0, 2, -1);
-		
-		sparseInsertElement(A, 1, 0, 2);
-		sparseInsertElement(A, 1, 1, -1);
+		sparseInsertElement(A, 0, 0, 1);
 		sparseInsertElement(A, 1, 2, 3);
+		sparseInsertElement(A, 1, 1, -1);
+		sparseInsertElement(A, 0, 1, 2);
+		sparseInsertElement(A, 1, 0, 2);
+		
 
 		double* tmpBuff = malloc(2 *sizeof(double));
 		MPIMatVecMul(A, x, tmpBuff, result, 0, 1, myrank, nbproc, recvcounts, displs);
@@ -133,9 +137,10 @@ void test_mpi_mat_vec_mul(int argc, char* argv[]){
 	if(myrank == 1){
 		SparseMatrix* A = createSparseMatrix(2, 2, 5);
 
+		sparseInsertElement(A, 2, 2, -1);
 		sparseInsertElement(A, 2, 0, -1);
 		sparseInsertElement(A, 2, 1, 3);
-		sparseInsertElement(A, 2, 2, -1);
+		
 
 		double* tmpBuff = malloc(sizeof(double));
 		MPIMatVecMul(A, x, tmpBuff, result, 2, 2, myrank, nbproc, recvcounts, displs);
@@ -482,11 +487,11 @@ int main(int argc, char* argv[]){
 	//test_mpi_mat_vec_mul(argc, argv);
 	//test_sparse_vec_dot_product();
 	//test_sparse_mat_vec_dot_product();
-	//test_mpi_conjugate(argc, argv);
+	test_mpi_conjugate(argc, argv);
 	//test_print_sparse_matrix();
 	//test_initAb(argc, argv);
 	//test_initAtb(argc, argv);
-	test_build_system_matrix(argc, argv);
+	//test_build_system_matrix(argc, argv);
 
 
 	return 0;

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <mpi.h>
 #include <stdio.h>
+#include <omp.h>
 
 #include "project2_Delaunoy_Crasset_SPARSE.h"
 
@@ -109,10 +110,22 @@ double sparseDotProduct(const SparseMatrix* mat, unsigned int row, const double*
 }
 
 void sparseVecInsertElement(SparseVector* vec, unsigned int j, double elem){
+	/*
 	vec->A[vec->currNbElement] = elem;
 	vec->indices[vec->currNbElement] = j;
 
 	vec->currNbElement++;
+	*/
+	
+	vec->currNbElement++;
+	int i;
+	for (i = vec->currNbElement - 1; i >= 1 && vec->indices[i-1] > j; i--){
+		vec->indices[i] = vec->indices[i-1];
+		vec->A[i] = vec->A[i-1];
+	}
+	
+	vec->indices[i] = j;
+	vec->A[i] = elem;
 }
 
 void sparseInsertElement(SparseMatrix* mat, unsigned int i, unsigned int j, double elem){

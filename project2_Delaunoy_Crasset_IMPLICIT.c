@@ -3,6 +3,7 @@
 #include <mpi.h>
 #include <math.h>
 #include <assert.h>
+#include <omp.h>
 
 #include "project2_Delaunoy_Crasset_IMPLICIT.h"
 #include "project2_Delaunoy_Crasset_SPARSE.h"
@@ -226,101 +227,109 @@ void BuildSystemMatrix(SparseMatrix** A, double** b, double* result, unsigned in
 
 void makeDefinitePositive(SparseMatrix** At, double** b, double* result, unsigned int start, unsigned int end, int xSize, int ySize, double** h, Parameters* params, double t){
     SparseMatrix* AtA = createSparseMatrix(start, end, 25);
-    SparseVector* vec = createSparseVector(5);
 
     int uBegin = (xSize + 1) * (ySize + 1);
     int vBegin = uBegin + (xSize + 2) * (ySize + 1);
     int vEnd = vBegin + (xSize + 1) * (ySize + 2) - 1;
 
     double* Atb = malloc((vEnd + 1) * sizeof(double));
-
     // Construct full At and mult by this
-    int x, y;
-    for(int i = 0; i <= vEnd; i++){
-        
-        //eta variable
-        if(i < uBegin){
-            get_2d(i, ySize + 1, &x, &y);
-            sparseVecInsertElement(vec, i, 1.0/params->deltaT);
 
-            if(x != 0)
-                sparseVecInsertElement(vec, uBegin + get_1d(x, y, ySize + 1), params->g/params->deltaX);
-            if(x != xSize)
-                sparseVecInsertElement(vec, uBegin + get_1d(x + 1, y, ySize + 1), -params->g/params->deltaX);
+    #pragma omp parallel default(shared)
+    {   
+        int x, y;
+        SparseVector* vec = createSparseVector(5);
 
-            if(y != 0)
-                sparseVecInsertElement(vec, vBegin + get_1d(x, y, ySize + 2), params->g/params->deltaY);
+        #pragma omp for schedule(static)
+        for(int i = 0; i <= vEnd; i++){
             
-            if(y != ySize)
-                sparseVecInsertElement(vec, vBegin + get_1d(x, y + 1, ySize + 2), -params->g/params->deltaY);
-        }
+            //eta variable
+            if(i < uBegin){
+                get_2d(i, ySize + 1, &x, &y);
+                sparseVecInsertElement(vec, i, 1.0/params->deltaT);
 
-        //u variable
-        else if(i < vBegin){
-            get_2d(i - uBegin, ySize + 1, &x, &y);
+                if(x != 0)
+                    sparseVecInsertElement(vec, uBegin + get_1d(x, y, ySize + 1), params->g/params->deltaX);
+                if(x != xSize)
+                    sparseVecInsertElement(vec, uBegin + get_1d(x + 1, y, ySize + 1), -params->g/params->deltaX);
 
-            if(x != 0)
-                sparseVecInsertElement(vec, get_1d(x - 1, y, ySize + 1), h[2*x-1][2*y]/params->deltaX);
-
-            if(x == 0)
-                sparseVecInsertElement(vec, get_1d(x, y, ySize + 1), -h[0][2*y]/params->deltaX);
-            else if(x != xSize + 1)
-                sparseVecInsertElement(vec, get_1d(x, y, ySize + 1), -h[2*x-1][2*y]/params->deltaX);
-
-            // At the border
-            if(x == 0 || x == xSize + 1){
-                sparseVecInsertElement(vec, i, 1.0);
+                if(y != 0)
+                    sparseVecInsertElement(vec, vBegin + get_1d(x, y, ySize + 2), params->g/params->deltaY);
+                
+                if(y != ySize)
+                    sparseVecInsertElement(vec, vBegin + get_1d(x, y + 1, ySize + 2), -params->g/params->deltaY);
             }
+
+            //u variable
+            else if(i < vBegin){
+                get_2d(i - uBegin, ySize + 1, &x, &y);
+
+                if(x != 0)
+                    sparseVecInsertElement(vec, get_1d(x - 1, y, ySize + 1), h[2*x-1][2*y]/params->deltaX);
+
+                if(x == 0)
+                    sparseVecInsertElement(vec, get_1d(x, y, ySize + 1), -h[0][2*y]/params->deltaX);
+                else if(x != xSize + 1)
+                    sparseVecInsertElement(vec, get_1d(x, y, ySize + 1), -h[2*x-1][2*y]/params->deltaX);
+
+                // At the border
+                if(x == 0 || x == xSize + 1){
+                    sparseVecInsertElement(vec, i, 1.0);
+                }
+                else{
+                    sparseVecInsertElement(vec, i, 1.0/params->deltaT + params->gamma);
+                }
+
+            }
+
+            //v variable
             else{
-                sparseVecInsertElement(vec, i, 1.0/params->deltaT + params->gamma);
+                get_2d(i - vBegin, ySize + 2, &x, &y);
+
+                if(y != 0)
+                    sparseVecInsertElement(vec, get_1d(x, y - 1, ySize + 1), h[2*x][2*y-1]/params->deltaY);
+
+                if(y == 0)
+                    sparseVecInsertElement(vec, get_1d(x, y, ySize + 1), -h[2*x][0]/params->deltaY);
+                else if (y != ySize + 1)
+                    sparseVecInsertElement(vec, get_1d(x, y, ySize + 1), -h[2*x][2*y-1]/params->deltaY);
+                
+                // At the border
+                if(y == 0 || y == ySize + 1){
+                    sparseVecInsertElement(vec, i, 1.0);
+                }
+
+                else{
+                    sparseVecInsertElement(vec, i, 1.0/params->deltaT + params->gamma);
+                }
             }
 
+            // Mult A by this vec
+            double result;
+            for(int j = start; j <= end; j++){
+                result = sparseMatVecDotProduct(*At, j, vec);
+                if(result != 0.0){
+                    #pragma omp critical(fill_AtA)
+                        sparseInsertElement(AtA, j, i, result);
+                }
+            }
+
+            // Mult b by this vec
+            Atb[i] = vecSparseDotProduct(vec, *b);
+
+            resetSparseVector(vec);
         }
-
-        //v variable
-        else{
-            get_2d(i - vBegin, ySize + 2, &x, &y);
-
-            if(y != 0)
-                sparseVecInsertElement(vec, get_1d(x, y - 1, ySize + 1), h[2*x][2*y-1]/params->deltaY);
-
-            if(y == 0)
-                sparseVecInsertElement(vec, get_1d(x, y, ySize + 1), -h[2*x][0]/params->deltaY);
-            else if (y != ySize + 1)
-                sparseVecInsertElement(vec, get_1d(x, y, ySize + 1), -h[2*x][2*y-1]/params->deltaY);
-            
-            // At the border
-            if(y == 0 || y == ySize + 1){
-                sparseVecInsertElement(vec, i, 1.0);
-            }
-
-            else{
-                sparseVecInsertElement(vec, i, 1.0/params->deltaT + params->gamma);
-            }
-        }
-
-        // Mult A by this vec
-        double result;
-        for(int j = start; j <= end; j++){
-            result = sparseMatVecDotProduct(*At, j, vec);
-            if(result != 0.0){
-                sparseInsertElement(AtA, j, i, result);
-            }
-        }
-
-        // Mult b by this vec
-        Atb[i] = vecSparseDotProduct(vec, *b);
-
-        resetSparseVector(vec);
+        freeSparseVector(vec);
     }
 
     freeSparseMatrix(*At);
-    freeSparseVector(vec);
     free(*b);
     *At = AtA;
     *b = Atb;
+
 }
 
+/*
 void initAb(SparseMatrix* A, double* b, double* result, unsigned int start, unsigned int end, int xSize, int ySize, double** h, Parameters* params, double t){
     resetSparseMatrix(A);
 
@@ -434,6 +443,7 @@ void initAb(SparseMatrix* A, double* b, double* result, unsigned int start, unsi
         }
     }
 }
+*/
 
 void initAtb(SparseMatrix* A, double* b, double* result, unsigned int start, unsigned int end, int xSize, int ySize, double** h, Parameters* params, double t){
     resetSparseMatrix(A);
@@ -443,113 +453,118 @@ void initAtb(SparseMatrix* A, double* b, double* result, unsigned int start, uns
     int vEnd = vBegin + (xSize + 1) * (ySize + 2) - 1;
 
     // Fill A
-    int x, y;
-    for(int i = start; i <= end; i++){
+    #pragma omp parallel default(shared)
+    {   
+        int x, y;
+        #pragma omp for schedule(static)
+        for(int i = start; i <= end; i++){
 
-        //eta variable
-        if(i < uBegin){
-            get_2d(i, ySize + 1, &x, &y);
-            sparseInsertElement(A, i, i, 1.0/params->deltaT);
+            //eta variable
+            if(i < uBegin){
+                get_2d(i, ySize + 1, &x, &y);
+                sparseInsertElement(A, i, i, 1.0/params->deltaT);
 
-            if(x != 0)
-                sparseInsertElement(A, i, uBegin + get_1d(x, y, ySize + 1), params->g/params->deltaX);
-            if(x != xSize)
-                sparseInsertElement(A, i, uBegin + get_1d(x + 1, y, ySize + 1), -params->g/params->deltaX);
+                if(x != 0)
+                    sparseInsertElement(A, i, uBegin + get_1d(x, y, ySize + 1), params->g/params->deltaX);
+                if(x != xSize)
+                    sparseInsertElement(A, i, uBegin + get_1d(x + 1, y, ySize + 1), -params->g/params->deltaX);
 
-            if(y != 0)
-                sparseInsertElement(A, i, vBegin + get_1d(x, y, ySize + 2), params->g/params->deltaY);
+                if(y != 0)
+                    sparseInsertElement(A, i, vBegin + get_1d(x, y, ySize + 2), params->g/params->deltaY);
+                
+                if(y != ySize)
+                    sparseInsertElement(A, i, vBegin + get_1d(x, y + 1, ySize + 2), -params->g/params->deltaY);
+            }
+
+            //u variable
+            else if(i < vBegin){
+                get_2d(i - uBegin, ySize + 1, &x, &y);
+
+                if(x != 0)
+                    sparseInsertElement(A, i, get_1d(x - 1, y, ySize + 1), h[2*x-1][2*y]/params->deltaX);
+
+                if(x == 0)
+                    sparseInsertElement(A, i, get_1d(x, y, ySize + 1), -h[0][2*y]/params->deltaX);
+                else if(x != xSize + 1)
+                    sparseInsertElement(A, i, get_1d(x, y, ySize + 1), -h[2*x-1][2*y]/params->deltaX);
+
+                // At the border
+                if(x == 0 || x == xSize + 1){
+                    sparseInsertElement(A, i, i, 1.0);
+                }
+                else{
+                    sparseInsertElement(A, i, i, 1.0/params->deltaT + params->gamma);
+                }
+
+            }
+
+            //v variable
+            else{
+                get_2d(i - vBegin, ySize + 2, &x, &y);
+
+                if(y != 0)
+                    sparseInsertElement(A, i, get_1d(x, y - 1, ySize + 1), h[2*x][2*y-1]/params->deltaY);
+
+                if(y == 0)
+                    sparseInsertElement(A, i, get_1d(x, y, ySize + 1), -h[2*x][0]/params->deltaY);
+                else if (y != ySize + 1)
+                    sparseInsertElement(A, i, get_1d(x, y, ySize + 1), -h[2*x][2*y-1]/params->deltaY);
+                
+                // At the border
+                if(y == 0 || y == ySize + 1){
+                    sparseInsertElement(A, i, i, 1.0);
+                }
+
+                else{
+                    sparseInsertElement(A, i, i, 1.0/params->deltaT + params->gamma);
+                }
+            }
+        }
+
+        // Fill b
+        #pragma omp for schedule(static)
+        for(int i = 0; i <= vEnd; i++){
             
-            if(y != ySize)
-                sparseInsertElement(A, i, vBegin + get_1d(x, y + 1, ySize + 2), -params->g/params->deltaY);
-        }
-
-        //u variable
-        else if(i < vBegin){
-            get_2d(i - uBegin, ySize + 1, &x, &y);
-
-            if(x != 0)
-                sparseInsertElement(A, i, get_1d(x - 1, y, ySize + 1), h[2*x-1][2*y]/params->deltaX);
-
-            if(x == 0)
-                sparseInsertElement(A, i, get_1d(x, y, ySize + 1), -h[0][2*y]/params->deltaX);
-            else if(x != xSize + 1)
-                sparseInsertElement(A, i, get_1d(x, y, ySize + 1), -h[2*x-1][2*y]/params->deltaX);
-
-            // At the border
-            if(x == 0 || x == xSize + 1){
-                sparseInsertElement(A, i, i, 1.0);
-            }
-            else{
-                sparseInsertElement(A, i, i, 1.0/params->deltaT + params->gamma);
-            }
-
-        }
-
-        //v variable
-        else{
-            get_2d(i - vBegin, ySize + 2, &x, &y);
-
-            if(y != 0)
-                sparseInsertElement(A, i, get_1d(x, y - 1, ySize + 1), h[2*x][2*y-1]/params->deltaY);
-
-            if(y == 0)
-                sparseInsertElement(A, i, get_1d(x, y, ySize + 1), -h[2*x][0]/params->deltaY);
-            else if (y != ySize + 1)
-                sparseInsertElement(A, i, get_1d(x, y, ySize + 1), -h[2*x][2*y-1]/params->deltaY);
-            
-            // At the border
-            if(y == 0 || y == ySize + 1){
-                sparseInsertElement(A, i, i, 1.0);
-            }
-
-            else{
-                sparseInsertElement(A, i, i, 1.0/params->deltaT + params->gamma);
-            }
-        }
-    }
-
-    // Fill b
-    for(int i = 0; i <= vEnd; i++){
-        
-        // eta constraint
-        if(i < uBegin){
-            b[i] = result[i]/params->deltaT;
-        }
-
-        // u constraint
-        else if(i < vBegin){
-            get_2d(i - uBegin, ySize + 1, &x, &y);
-
-            // At the border
-            if(x == 0 || x == xSize + 1){
-                b[i] = 0;
-            }
-
-            // In the middle
-            else{
+            // eta constraint
+            if(i < uBegin){
                 b[i] = result[i]/params->deltaT;
             }
-        }
 
-        // v constraint
-        else{
-            get_2d(i - vBegin, ySize + 2, &x, &y);
-            // At the bottom border
-            if(y == 0){
-                b[i] = 0;
+            // u constraint
+            else if(i < vBegin){
+                get_2d(i - uBegin, ySize + 1, &x, &y);
+
+                // At the border
+                if(x == 0 || x == xSize + 1){
+                    b[i] = 0;
+                }
+
+                // In the middle
+                else{
+                    b[i] = result[i]/params->deltaT;
+                }
             }
 
-            // At the top border
-            else if(y == ySize + 1){
-                if(params->s == 0)
-                    b[i] = params->A * sin(2 * M_PI * params->f * t * params->deltaT);
-                else
-                    b[i] = params->A * sin(2 * M_PI * params->f * t * params->deltaT) * exp(- t * params->deltaT / 500);
-            }
-
-            // In the middle
+            // v constraint
             else{
-                b[i] = result[i]/params->deltaT;
+                get_2d(i - vBegin, ySize + 2, &x, &y);
+                // At the bottom border
+                if(y == 0){
+                    b[i] = 0;
+                }
+
+                // At the top border
+                else if(y == ySize + 1){
+                    if(params->s == 0)
+                        b[i] = params->A * sin(2 * M_PI * params->f * t * params->deltaT);
+                    else
+                        b[i] = params->A * sin(2 * M_PI * params->f * t * params->deltaT) * exp(- t * params->deltaT / 500);
+                }
+
+                // In the middle
+                else{
+                    b[i] = result[i]/params->deltaT;
+                }
             }
         }
     }
@@ -571,7 +586,8 @@ int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, dou
 
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     MPI_Comm_size(MPI_COMM_WORLD, &nbproc);
-    int openMP_nbthreads = atoi(getenv("OMP_NUM_THREADS"));
+    //int openMP_nbthreads = atoi(getenv("OMP_NUM_THREADS"));
+    int openMP_nbthreads = omp_get_num_threads();
 
     /*
     fprintf(stderr, "map->a = %lf\n", map->a);

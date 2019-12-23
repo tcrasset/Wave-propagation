@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <mpi.h>
+#include <omp.h>
 
 #include "project2_Delaunoy_Crasset_EXPLICIT.h"
 #include "project2_Delaunoy_Crasset_IO.h"
