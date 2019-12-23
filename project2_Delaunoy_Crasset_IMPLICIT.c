@@ -143,13 +143,18 @@ double* MPISparseConjugateGradient(SparseMatrix* A, double* b, unsigned int size
         alpha = rCurrNorm/MPIDotProduct(pCurr, Ap, size, startIndex, endIndex, myrank, nbproc);
 
         // Compute xNext
+        #pragma omp parallel default(shared)
+        { 
 
-        for(unsigned int i = 0; i < size; i++)
-            xNext[i] = xCurr[i] + alpha * pCurr[i];
+            #pragma omp for schedule(static)
+            for(unsigned int i = 0; i < size; i++)
+                xNext[i] = xCurr[i] + alpha * pCurr[i];
 
-        // Compute rNext
-        for(unsigned int i = 0; i < size; i++)
-            rNext[i] = rCurr[i] - alpha * Ap[i];
+            // Compute rNext
+            #pragma omp for schedule(static)
+            for(unsigned int i = 0; i < size; i++)
+                rNext[i] = rCurr[i] - alpha * Ap[i];
+        }
 
         // Compute next rNorm
         rNextNorm = MPIDotProduct(rNext, rNext, size, startIndex, endIndex, myrank, nbproc);
@@ -158,9 +163,14 @@ double* MPISparseConjugateGradient(SparseMatrix* A, double* b, unsigned int size
         beta = rNextNorm/rCurrNorm;
 
         // Compute pNext
-        for(unsigned int i = 0; i < size; i++)
-            pNext[i] = rNext[i] + beta * pCurr[i];
-      
+        #pragma omp parallel default(shared)
+        { 
+
+            #pragma omp for schedule(static)
+            for(unsigned int i = 0; i < size; i++)
+                pNext[i] = rNext[i] + beta * pCurr[i];
+        }
+          
         // Go to next iteration
         double* buf;
 
