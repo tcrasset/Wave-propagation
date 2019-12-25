@@ -1,11 +1,16 @@
 # Wave-propagation
-Below is just a small exerpt of the full statement `Statement.pdf`
+Below is just a small exerpt of the full statement [Statement.pdf](Statement.pdf).
 
-Wave propagation at the surface of the ocean can be modelled using the so-called “shallow
-water” equations, which are derived by depth-integrating the Navier-Stokes equations.
+>Wave propagation at the surface of the ocean can be modelled using the so-called “shallow
+>water” equations, which are derived by depth-integrating the Navier-Stokes equations.
+>The domain of study is a rectangle [0, a] × [0, b] whose dimensions and bathymetric map
+>(map of h(x, y)) are given by an input file. Sample input files are provided in the directory [`Maps/`]
 
-The domain of study is a rectangle [0, a] × [0, b] whose dimensions and bathymetric map
-(map of h(x, y)) are given by an input file. Sample input files are provided in the directory `Maps/`
+In the `Scripts` directory are multiple bash scripts and Slurm scripts to run the program on a cluster. 
+There are 2 python scripts, `contour_plot.py` to display the input map files and the output files `eta_XXX.dat`, `u_XXX.dat` and `v_XXX.dat` and `plot.py` to plot the scalabilty of the program using data gathered from running the program using the parameter files in `Report/Parameters`.
+
+A full analysis can be seen in the Report [Report.pdf](Report.pdf).
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
@@ -35,7 +40,8 @@ mpirun --version
 
 ### Compilation
 
-To compile the program, run 
+#### Locally
+To compile the program and run it locally (on your machine), run the following commands in the terminal.
 
 ```
 mpicc project2_Delaunoy_Crasset*.c -std=c99 -lm -fopenmp -o waves               
@@ -59,6 +65,12 @@ Running the explicit scheme on the map `sriLanka` using 4 threads and 2 process.
 ```
 OMP_NUM_THREADS=4 mpirun -np 2 waves Parameters/sriLanka_explicit_result.txt  Maps/sriLanka.dat 0
 ```
+
+#### On a cluster with Slurm
+
+If you want to fully use the capabilities of the program, we suggest you run this code on a cluster managed by the Slurm Workload Manager.
+
+Sample scripts are provided in the `Scripts/` directory.
 
 ## Authors
 
