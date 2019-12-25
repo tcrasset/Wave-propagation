@@ -87,3 +87,4 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 ## Acknowledgments
 
 Thanks to Pr. C. Geuzaine for his course of High Perfomance Scientific Computing at the University of Liège as well as his assistant, Anthony Royer.
+Moreover, we would like to thank the CECI(Consortium des Équipements de Calcul Intensif) for the cluster they provided.
