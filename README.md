@@ -13,8 +13,6 @@ A full analysis can be seen in the Report [Report.pdf](Report.pdf).
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
-
 This can be run on a local machine or on a cluster using a Slurm script.
 
 ### Prerequisites
