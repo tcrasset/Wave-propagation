@@ -19,12 +19,11 @@ export MKL_NUM_THREADS=$SLURM_NTASKS
 
 ############# VARIABLES TO MODIFY ############
 serverPath=/home/ulg/info0939/tcrasset/Project2
-##############################################
-
-parameter_file=sriLanka_explicit_result.txt
+parameter_file=sriLanka_explicit_result_small.txt
 map_file=sriLanka.dat
 TIMESTAMP=`date +%Y-%m-%d_%H-%M-%S`
 output_filename="$serverPath/Results/statistics_explicit_result_$SLURM_NTASKS-$SLURM_CPUS_PER_TASK-on-$TIMESTAMP"
+##############################################
 
 for ii in $(seq 2 2 $SLURM_NNODES);do sleep 1;echo $ii;srun -n $SLURM_NNODES -N $ii true;done
 

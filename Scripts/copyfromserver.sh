@@ -32,8 +32,15 @@ ssh-add $rsaPath
 # scp -i $rsaPath $user@$server:$serverPath/Results/modtime_matrices.zip $homePath/Results
 # scp -i $rsaPath $user@$server:$serverPath/Results/modtime_bis_matrices.zip $homePath/Results
 # scp -i $rsaPath $user@$server:$serverPath/Results/modspace_bis_matrices.zip $homePath/Results
-scp -i $rsaPath $user@$server:$serverPath/Results/mod_space_matrices_bisbis.zip $homePath/Results
+# scp -i $rsaPath $user@$server:$serverPath/Results/mod_space_matrices_bisbis.zip $homePath/Results
 
+
+# scp -i $rsaPath $user@$server:$serverPath/Results/matrices_of_sriLanka_explicit_result_small_16_1/eta_1050.dat $homePath/Results/explicit
+# scp -i $rsaPath $user@$server:$serverPath/Results/matrices_dx25000_dt_5.zip $homePath/Results/comparison
+ 
+# scp -i $rsaPath $user@$server:$serverPath/Results/matrices_dx10000_dt_1.zip $homePath/Results/comparison
+
+scp -i $rsaPath $user@$server:$serverPath/Results/matrices_of_sriLanka_implicit_result_16_1/eta_1050.dat $homePath/Results/comparison
 
 # Implicit vs explicit comparison
 # scp -i $rsaPath $user@$server:$serverPath/Results/matrices_of_sriLanka_explicit_result_16_1/eta_20000.dat $homePath/Results/comparison

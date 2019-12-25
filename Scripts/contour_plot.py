@@ -80,7 +80,7 @@ def myContourPlot(matrix, title, output_filename):
 
 
 if __name__=='__main__':
-	# contourInput('test_map.dat')
+	contourInput('Maps/sriLanka.dat', "srilanka.svg")
 	directory = "/home/tom/Documents/Uliege/Master2/HPC/Project2/Results"
 
 	# foldername = "matrices_of_mod_space_250_4_4" # Exploded
@@ -169,14 +169,22 @@ if __name__=='__main__':
 	# foldername = 'matrices_of_mod_space_575_4_4'
 	# filename = "eta_20000"
 
-	foldername = 'matrices_of_mod_space_600_4_4'
-	filename = "eta_20000"
+	# foldername = 'matrices_of_mod_space_600_4_4'
+	# filename = "eta_20000"
 
+
+	directory = "/home/tom/Documents/Uliege/Master2/HPC/Project2/Results/"
+
+	# foldername = "comparison/matrices_of_sriLanka_explicit_result_small_16_1"
+	# filename = "eta_10"
+
+	foldername = "comparison"
+	filename = "eta_1050"
 
 	dat = ".dat"
 	svg = ".svg"
 	# output_filename = "{}/{}/{}.svg".format(directory, foldername, filename)
-	output_filename = "{}/{}/{}.png".format(directory, foldername, filename)
+	output_filename = "{}/{}/{}.svg".format(directory, foldername, filename)
 	input_filename = "{}/{}/{}.dat".format(directory, foldername, filename)
 	contourOutput(input_filename, output_filename)
 
