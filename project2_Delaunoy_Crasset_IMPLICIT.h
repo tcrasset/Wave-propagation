@@ -145,6 +145,6 @@ void save_inputs(double* x, int xSize, int ySize);
  * Returns:
  * A integer indicating whether the function executed successfully
  */
-int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, double** v, int debug, int debug_rank);
+int eulerImplicitMPI(Map* map, Parameters* params, double** eta, double** u, double** v);
 
 #endif

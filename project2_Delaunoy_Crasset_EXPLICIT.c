@@ -14,12 +14,27 @@
 
 #define M_PI 3.14159265358979323846
 
+/**
+ * Compute the size of the arrays this process is responsible for
+ *
+ * Parameters:
+ * rank: The rank of the calling process
+ * nbproc: The number of processes
+ * xSize: The discretization along the x axis
+ * size_X: A pointer to an integer that will be set to the x size of eta and v
+ * size_X_u: A pointer to an integer that will be set to the x size of u
+ * size_X: A pointer to an integer that will be set to the x size of h
+ * startval_X_h: A pointer to an integer that will be set to the starting value of h
+ * endval_X_h: A pointer to an integer that will be set to the ending value of h
+ */
 void get_array_sizes(int rank, int nbproc, int xSize, int* size_X, int* size_X_u, int* size_X_h, int* startval_X_h, int* endval_X_h){
     int mpi_xsize = xSize/nbproc;
 
     int startval_X, endval_X;
     int startval_X_u, endval_X_u;
-    if(nbproc == 1){//Only 1 process
+
+    // When there is only one process
+    if(nbproc == 1){
         startval_X = 0;
         endval_X = xSize;
         *startval_X_h = 0;
@@ -27,21 +42,27 @@ void get_array_sizes(int rank, int nbproc, int xSize, int* size_X, int* size_X_u
         startval_X_u = 0;
         endval_X_u = xSize+1;
     }
-    else if(rank == 0){//Multiprocess
+
+    // When the process is the first
+    else if(rank == 0){
         startval_X = 0;
         endval_X = mpi_xsize;
         *startval_X_h = 0;
         *endval_X_h = 2*mpi_xsize + 2;
         startval_X_u = 0;
         endval_X_u = mpi_xsize;
-    }else if(rank == nbproc -1){
+    }
+    // When the process lies in the middle of the matrix
+    else if(rank == nbproc -1){
         startval_X = rank * mpi_xsize + 1;
         endval_X = (rank+1) * mpi_xsize;
         *startval_X_h = 2 * rank * mpi_xsize + 2;
         *endval_X_h = 2 * (rank+1) * mpi_xsize + 2;
         startval_X_u = rank * mpi_xsize + 1;
         endval_X_u = (rank+1) * mpi_xsize + 1;
-    }else{
+    }
+    // When the process is the last
+    else{
         startval_X = rank * mpi_xsize + 1;
         endval_X = (rank+1) * mpi_xsize; 
         *startval_X_h = 2 * rank * mpi_xsize + 2;
@@ -50,6 +71,7 @@ void get_array_sizes(int rank, int nbproc, int xSize, int* size_X, int* size_X_u
         endval_X_u = (rank+1) * mpi_xsize;
     }
 
+    // Add the remaining lines to first processes
     int remaining = xSize%nbproc;
     if(rank < remaining){
         startval_X += rank;
@@ -64,34 +86,50 @@ void get_array_sizes(int rank, int nbproc, int xSize, int* size_X, int* size_X_u
         *endval_X_h += remaining * 2;
     }
 
+    // Set variables
     *size_X = endval_X - startval_X + 1;
     *size_X_u = endval_X_u - startval_X_u + 1;
     *size_X_h = *endval_X_h - *startval_X_h + 1;
 }
 
+/**
+ * Gather results from all process and save to disk
+ *
+ * Parameters:
+ * eta: The eta array of the calling process
+ * u: The u array of the calling process
+ * v: The v array of the calling process
+ * xSize: The discretization size along the x axis
+ * ySize: The discretization size along the y axis
+ * iteration: The iteration at which the save is performed
+ * params: The structure holding the parameters of the run
+ */
+void gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize, unsigned int iteration, Parameters* params){
 
-
-void gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySize,  int debug, unsigned int iteration, Parameters* params){
-
+    // Get process info
     int nbproc, myrank;
     MPI_Comm_size(MPI_COMM_WORLD, &nbproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
+    // Get the array sizes
     int size_X, size_X_u, size_X_h, startval_X_h, endval_X_h;
     get_array_sizes(myrank, nbproc, xSize, &size_X, &size_X_u, &size_X_h, &startval_X_h, &endval_X_h);
     
+    // Get number of threads
     int openMP_nbthreads = atoi(getenv("OMP_NUM_THREADS"));
 
     double* etaTotal;
     double* uTotal;
     double* vTotal;
 
+    // Get process result
     double* etaPartial = transformMatrixToArray(eta, size_X, ySize +1);
     double* uPartial = transformMatrixToArray(u, size_X_u, ySize +1);
     double* vPartial = transformMatrixToArray(v, size_X, ySize +2);
 
     if(nbproc != 1){
 
+        // Compute the receive counts and displacements vectors
         int tmp_size_X;
         int tmp_size_X_u;
         int tmp_size_X_h;
@@ -129,6 +167,7 @@ void gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySiz
             }
         }
 
+        // Gather the results of every process
         etaTotal = malloc((xSize + 1) * (ySize  + 1)* sizeof(double));
         uTotal = malloc((xSize + 2) * (ySize  + 1)* sizeof(double));
         vTotal = malloc((xSize + 1) * (ySize  + 2)* sizeof(double));
@@ -138,6 +177,7 @@ void gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySiz
         MPI_Gatherv(vPartial, (size_X) * (ySize + 2) , MPI_DOUBLE, vTotal, recvcounts_v, disp_v, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         
 
+        // Free allocated memory
         free(etaPartial);
         free(uPartial);
         free(vPartial);
@@ -148,10 +188,13 @@ void gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySiz
         free(disp_u);
         free(disp_v);
 
+        // Save results
         if(myrank == 0){
             saveToDisk(etaTotal, uTotal, vTotal, xSize, ySize, iteration, params, nbproc, openMP_nbthreads);
         }
     }
+
+    // In case there is only one process, save directly
     else{
         etaTotal = transformMatrixToArray(eta, xSize + 1, ySize +1);
         uTotal = transformMatrixToArray(u, xSize + 2, ySize +1);
@@ -160,24 +203,40 @@ void gather_and_save(double** eta, double**  u, double**  v, int xSize, int ySiz
         saveToDisk(etaTotal, uTotal, vTotal, xSize, ySize, iteration, params, nbproc, openMP_nbthreads);
     }
 
+    // Free allocated memory
     free(etaTotal);
     free(uTotal);
     free(vTotal);
 }
 
-int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, double*** v, int debug, int debug_rank){
+/**
+ * Solve the Navier-Stockes equations using explicit Euler method
+ *
+ * Parameters:
+ * map: A structure containing the map infos
+ * params: The parameters of the run
+ * eta: A pointer to a matrix that will be set to the result of eta
+ * u: A pointer to a matrix that will be set to the result of u
+ * v: A pointer to a matrix that will be set to the result of v
+ *
+ * Returns:
+ * An integer indicating whether the algorithm run with success or not
+ */
+int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, double*** v){
     
-
     assert(map);
     assert(params);
 
+    // Get process info
     int nbproc, myrank ;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     MPI_Comm_size(MPI_COMM_WORLD, &nbproc);
 
+    // Compute discretization size
     int xSize = (int)(map->a / params->deltaX);
     int ySize = (int)(map->b / params->deltaY);
 
+    // Compute array sizes
     int size_X;
     int size_X_u;
     int size_X_h;
@@ -194,55 +253,55 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
 
     double** etaNext = allocateDoubleMatrix(size_X, ySize + 1);
     if(!etaNext){
-        freeDoubleMatrix(etaCurr, size_X,0);
+        freeDoubleMatrix(etaCurr, size_X);
         return -1;
     }
 
     // u in {-1/2, 1/2, ..., a/dx + 1/2}X{0, 1, ..., b/dy}
     double** uCurr = allocateDoubleMatrix(size_X_u, ySize + 1);
     if(!uCurr){
-        freeDoubleMatrix(etaCurr,size_X,0);
-        freeDoubleMatrix(etaNext,size_X,0);
+        freeDoubleMatrix(etaCurr,size_X);
+        freeDoubleMatrix(etaNext,size_X);
         return -1;
     }
 
     double** uNext = allocateDoubleMatrix(size_X_u, ySize + 1);
     if(!uNext){
-        freeDoubleMatrix(etaCurr,size_X,0);
-        freeDoubleMatrix(etaNext,size_X,0);
-        freeDoubleMatrix(uCurr, size_X_u,0);
+        freeDoubleMatrix(etaCurr,size_X);
+        freeDoubleMatrix(etaNext,size_X);
+        freeDoubleMatrix(uCurr, size_X_u);
         return -1;
     }
 
     // v in {0, 1, .., a/dx}X{-1/2, 1/2, ..., b/dy + 1/2}
     double** vCurr = allocateDoubleMatrix(size_X, ySize + 2);
     if(!vCurr){
-        freeDoubleMatrix(etaCurr, size_X,0);
-        freeDoubleMatrix(etaNext, size_X,0);
-        freeDoubleMatrix(uCurr, size_X_u,0);
-        freeDoubleMatrix(uNext, size_X_u,0);
+        freeDoubleMatrix(etaCurr, size_X);
+        freeDoubleMatrix(etaNext, size_X);
+        freeDoubleMatrix(uCurr, size_X_u);
+        freeDoubleMatrix(uNext, size_X_u);
         return -1;
     }
 
     double** vNext = allocateDoubleMatrix(size_X, ySize + 2);
     if(!vNext){
-        freeDoubleMatrix(etaCurr, size_X,0);
-        freeDoubleMatrix(etaNext, size_X,0);
-        freeDoubleMatrix(uCurr, size_X_u,0);
-        freeDoubleMatrix(uNext, size_X_u,0);
-        freeDoubleMatrix(vCurr, size_X,0);
+        freeDoubleMatrix(etaCurr, size_X);
+        freeDoubleMatrix(etaNext, size_X);
+        freeDoubleMatrix(uCurr, size_X_u);
+        freeDoubleMatrix(uNext, size_X_u);
+        freeDoubleMatrix(vCurr, size_X);
         return -1;
     }
     
     // h in {-1/2, 0, 1/2, ..., a/dx, a/dx + 1/2}X{-1/2, 0, 1/2, ..., b/dy, b/dy + 1/2}
     double** h = allocateDoubleMatrix(size_X_h, 2 * ySize + 3);
     if(!h){
-        freeDoubleMatrix(etaCurr, size_X,0);
-        freeDoubleMatrix(etaNext, size_X,0);
-        freeDoubleMatrix(uCurr, size_X_u,0);
-        freeDoubleMatrix(uNext, size_X_u,0);
-        freeDoubleMatrix(vCurr, size_X,0);
-        freeDoubleMatrix(vNext, size_X,0);
+        freeDoubleMatrix(etaCurr, size_X);
+        freeDoubleMatrix(etaNext, size_X);
+        freeDoubleMatrix(uCurr, size_X_u);
+        freeDoubleMatrix(uNext, size_X_u);
+        freeDoubleMatrix(vCurr, size_X);
+        freeDoubleMatrix(vNext, size_X);
         return -1;
     }
 
@@ -253,6 +312,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
         }
     }
 
+    // Initialize arrays
     #pragma omp parallel default(shared)
     {   
         #pragma omp for schedule(static)
@@ -444,7 +504,7 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
 
         // Process 0 gathers the sub-matrices of the processes and saves them to disk
         if(params->S != 0 && t % params->S == 0){
-            gather_and_save(etaNext,uNext,vNext, xSize,ySize, debug, t, params);
+            gather_and_save(etaNext,uNext,vNext, xSize,ySize, t, params);
         }
 
         // Go to next step
@@ -468,10 +528,10 @@ int eulerExplicitMPI(Map* map, Parameters* params, double*** eta, double*** u, d
     *u = uCurr;
     *v = vCurr;
     
-    freeDoubleMatrix(etaNext, size_X,0);
-    freeDoubleMatrix(uNext, size_X_u,0);
-    freeDoubleMatrix(vNext, size_X,0);
-    freeDoubleMatrix((double**) h, size_X_h,0);
+    freeDoubleMatrix(etaNext, size_X);
+    freeDoubleMatrix(uNext, size_X_u);
+    freeDoubleMatrix(vNext, size_X);
+    freeDoubleMatrix((double**) h, size_X_h);
     
     free(uReceived);
     free(etaReceived);
